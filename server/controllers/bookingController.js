@@ -3,7 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 // ================= SECRET =================
-const JWT_SECRET = process.env.JWT_SECRET || "AISHU";
+// const JWT_SECRET = process.env.JWT_SECRET || "AISHU";
+
+const secretKey = process.env.JWT_SECRET || "Aishu";
+const token = jwt.sign({ id: user._id }, secretKey);
 
 // ================= STATUS CONSTANTS =================
 const STATUS = {
