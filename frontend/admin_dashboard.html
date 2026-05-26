@@ -513,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         bookingsCache.forEach(b => {
             if (b.paymentStatus === "Paid") {
-                revenue += b.estimatedPrice || 0;
+                revenue += (b.estimatedPrice || b.price || 0);
             }
         });
 
