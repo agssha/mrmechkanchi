@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 // ================= SECRET =================
 // const JWT_SECRET = process.env.JWT_SECRET || "AISHU";
 
-const secretKey = process.env.JWT_SECRET || "Aishu";
+const secretKey = process.env.JWT_SECRET || "mr_ags_secret_key_2026!";
 const token = jwt.sign({ id: user._id }, secretKey);
 
 // ================= STATUS CONSTANTS =================
