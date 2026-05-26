@@ -327,262 +327,383 @@
     </main>
 
     <script>
-    // 🔥 UPDATED: Central configurations wiring security components directly to server routes
-    const API_BASE = "https://mrmechkanchi-1.onrender.com/mechanic/api";
-    const token = localStorage.getItem("token");
-    const phone = localStorage.getItem("mechanicPhone");
+// ==========================================
+// SUPABASE CONFIG
+// ==========================================
+const supabaseUrl = 'https://vhdngekmhxldkyvrcblz.supabase.co';
+const supabaseAnonKey = 'sb_publishable_56HVVk9DzW8WDAT7LjzzTg_mJ34xQhL';
 
-    // Secure Routing Shield Verification Guard Route
-    if (!token || !phone) {
-        alert("Security clearance validation missing. Returning to verification gateway.");
-        window.location.href = "/mech_login.html";
-    }
+const supabaseClient = window.supabase.createClient(
+    supabaseUrl,
+    supabaseAnonKey
+);
 
-    // =========================================================================
-    // 🚀 DECODE JWT TOKEN TO EXTRACT MECHANIC ATTRIBUTES DYNAMICALLY
-    // =========================================================================
-    let parsedName = "Service Engineer";
-    let parsedType = "Appliance Specialist";
+// ==========================================
+// GLOBALS
+// ==========================================
+const API_BASE = "https://mrmechkanchi-1.onrender.com/api";
 
+let activeUser = null;
+let selectedRating = 0;
+let pollingInterval = null;
+
+// ==========================================
+// GOOGLE LOGIN
+// ==========================================
+window.signInWithGoogle = async function () {
     try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const tokenData = JSON.parse(jsonPayload);
-        parsedName = tokenData.name || localStorage.getItem("name") || "Service Engineer";
-        parsedType = tokenData.mechanicType || localStorage.getItem("mechanicType") || "Appliance Specialist";
-    } catch (e) {
-        console.error("Token decoding fault handled gracefully:", e);
-        parsedName = localStorage.getItem("name") || "Service Engineer";
-        parsedType = localStorage.getItem("mechanicType") || "Appliance Specialist";
-    }
-
-    // UI ELEMENT INJECTIONS
-    document.getElementById("mechName").innerText = parsedName;
-    document.getElementById("mechType").innerText = parsedType;
-    document.getElementById("profileName").innerText = parsedName;
-    document.getElementById("profileType").innerText = parsedType;
-    document.getElementById("profilePhone").innerText = phone;
-
-    function executeLogout() {
-        if(!confirm("Are you sure you want to log out of the session?")) return;
-        localStorage.clear();
-        window.location.href = "/mech_login.html";
-    }
-
-    function switchView(target) {
-        document.getElementById("dashboardSection").classList.add("hidden");
-        document.getElementById("myJobsSection").classList.add("hidden");
-        document.getElementById("completedSection").classList.add("hidden");
-        document.getElementById("availabilitySection").classList.add("hidden");
-        document.getElementById("profileSection").classList.add("hidden");
-        
-        document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
-
-        if (target === 'dashboard') {
-            document.getElementById("dashboardSection").classList.remove("hidden");
-            document.getElementById("myJobsSection").classList.remove("hidden");
-            document.getElementById("nav-dashboard").classList.add("active");
-        } else {
-            document.getElementById(`${target}Section`).classList.remove("hidden");
-            document.getElementById(`nav-${target}`).classList.add("active");
-        }
-    }
-
-    // =========================================================================
-    // CORE PIPELINE ACTION CONTROLLERS
-    // =========================================================================
-
-    async function acceptJob(id) {
-        try {
-            const res = await fetch(`${API_BASE}/accept-job`, { // Removed /mechanic since it's in API_BASE now
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    bookingId: id // FIX: Send the exact ID string passed into the function
-                })
-            });
-
-            if(res.ok) {
-                loadBookingFeedStream(true); // Force refresh
-            } else {
-                const data = await res.json();
-                alert(data.message || "Accept job request mutation refused.");
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo:
+                    "https://mrmechkanchi-2.onrender.com/booking_service.html"
             }
-        } catch (err) {
-            console.error("Pipeline write failure:", err);
-        }
-    }
+        });
 
-    async function setPrice(id) {
-        const pricingInput = document.getElementById(`price-${id}`).value;
-        if (!pricingInput || Number(pricingInput) <= 0) {
-            alert("Please enter a valid currency estimation amount value.");
+        if (error) {
+            alert(error.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Google Login Failed");
+    }
+};
+
+// ==========================================
+// LOGOUT
+// ==========================================
+window.signOut = async function () {
+    try {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+// ==========================================
+// AUTH STATE
+// ==========================================
+document.addEventListener("DOMContentLoaded", async () => {
+
+    const modal = document.getElementById("auth-modal");
+    const mainContent = document.getElementById("main-content");
+
+    async function handleSession(session) {
+
+        if (!session) {
+            activeUser = null;
+
+            modal.classList.remove("hidden");
+            mainContent.classList.add("hidden");
+
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+
             return;
         }
 
-        try {
-            const res = await fetch(`${API_BASE}/set-charge`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ bookingId: id, price: Number(pricingInput) })
-            });
+        activeUser = session.user;
 
-            if(res.ok) {
-                loadBookingFeedStream(true); // Force refresh
-            } else {
-                const data = await res.json();
-                alert(data.message || "Pricing submission context rejected.");
-            }
-        } catch (err) {
-            console.error("Pricing transaction commit crash:", err);
+        modal.classList.add("hidden");
+        mainContent.classList.remove("hidden");
+
+        const firstName =
+            activeUser.user_metadata?.full_name?.split(" ")[0] || "User";
+
+        document.getElementById("auth-nav-status").innerHTML = `
+            <div class="flex items-center gap-4">
+                <span class="text-slate-700">
+                    Hi, ${firstName}
+                </span>
+
+                <button
+                    onclick="signOut()"
+                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md"
+                >
+                    Logout
+                </button>
+            </div>
+        `;
+
+        if (activeUser.user_metadata?.full_name) {
+            document.getElementById("name").value =
+                activeUser.user_metadata.full_name;
         }
+
+        loadTrackingLogs();
+
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        pollingInterval = setInterval(() => {
+            loadTrackingLogs();
+        }, 5000);
     }
 
-    async function recordCashPayment(id) {
-        if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
 
-        try {
-            const res = await fetch(`${API_BASE}/confirm-cash`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ bookingId: id })
-            });
+    handleSession(session);
 
-            if(res.ok) {
-                alert("Cash payment collection verified!");
-                loadBookingFeedStream(true); // Force refresh
-            } else {
-                const data = await res.json();
-                alert(data.message || "Payment status processing mutation failure.");
-            }
-        } catch (err) {
-            console.error("Payment registration route trace drop:", err);
-        }
-    }
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        handleSession(session);
+    });
 
-    // =========================================================================
-    // REFRESH LOGIC WITH INPUT GUARD
-    // =========================================================================
-    async function loadBookingFeedStream(force = false) {
-        // 🛡️ THE FIX: If mechanic is typing in a price box, don't refresh the HTML
-        const activeElement = document.activeElement;
-        if (!force && activeElement && activeElement.classList.contains('price-input')) {
-            console.log("Mechanic is typing... background refresh paused.");
-            return; 
-        }
+    // BOOKING FORM
+    document
+        .getElementById("bookingForm")
+        .addEventListener("submit", async function (e) {
 
-        try {
-            const res = await fetch(`${API_BASE}/my-jobs/${phone}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            const bookings = data.bookings || [];
+            e.preventDefault();
 
-            const activeBox = document.getElementById("jobsContainer");
-            const closedBox = document.getElementById("completedContainer");
-
-            activeBox.innerHTML = "";
-            closedBox.innerHTML = "";
-
-            document.getElementById("totalJobs").innerText = bookings.length;
-            document.getElementById("completedJobs").innerText = bookings.filter(b => b.status === "completed").length;
-            document.getElementById("pendingJobs").innerText = bookings.filter(b => b.status !== "completed").length;
-
-            if (bookings.length === 0) {
-                activeBox.innerHTML = `<p style="font-size: 13px; color: #9ca3af; font-style: italic;">No active jobs.</p>`;
-                closedBox.innerHTML = `<p style="font-size: 13px; color: #9ca3af; font-style: italic;">No history.</p>`;
+            if (!activeUser) {
+                alert("Please login first");
                 return;
             }
 
-            bookings.forEach(b => {
-                const statusStr = String(b.status).toLowerCase();
-                const isMasked = statusStr === 'assigned' || statusStr === 'pending';
-                
-                // FIX: Grab the correct MongoDB ID safely
-                const safeId = b._id || b.id;
-                
-                let cardClass = "job-card ";
-                let badgeClass = "status-badge ";
-                if (statusStr === 'completed') { cardClass += "completed-border"; badgeClass += "badge-completed"; }
-                else if (statusStr === 'price_set') { cardClass += "priced-border"; badgeClass += "badge-priced"; }
-                else if (statusStr === 'accepted') { cardClass += "active-border"; badgeClass += "badge-accepted"; }
-                else { badgeClass += "badge-assigned"; }
+            const payload = {
+                name: document.getElementById("name").value.trim(),
+                mobileNumber: document.getElementById("phone").value.trim(),
+                userEmail: activeUser.email,
+                userId: activeUser.id,
+                serviceAddress: document.getElementById("address").value.trim(),
+                serviceType: document.getElementById("serviceType").value,
+                problemDescription: document.getElementById("problem").value.trim()
+            };
 
-                let paymentContextHTML = "";
-                if (b.paymentStatus === "Paid") {
-                    const styleMode = b.paymentMode === "Cash" ? "pay-cash" : "pay-online";
-                    paymentContextHTML = `<div class="payment-status-box ${styleMode}">PAID via ${b.paymentMode.toUpperCase()}</div>`;
+            try {
+                const response = await fetch(
+                    `${API_BASE}/customer/book-repair`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.message || "Booking failed");
+                    return;
                 }
 
-                const cardTemplate = `
-                    <div class="${cardClass}">
-                        <h3>
-                            <span>${b.serviceType || "Repair Ticket"}</span>
-                            <span class="${badgeClass}">${b.status.replace("_", " ")}</span>
-                        </h3>
-                        <p><b>Customer:</b> ${b.name || "Customer"}</p>
-                        <p><b>Phone:</b> ${isMasked ? "🔒 Hidden" : `<a href="tel:${b.mobileNumber}" style="color: #2563eb; font-weight: bold;">${b.mobileNumber}</a>`}</p>
-                        <p><b>Address:</b> ${b.serviceAddress}</p>
-                        <p><b>Problem:</b> <span style="color: #4b5563; font-style: italic;">"${b.problemDescription}"</span></p>
-                        <p><b>Invoice:</b> ${b.estimatedPrice > 0 ? `<b>₹${b.estimatedPrice}</b>` : "<span style='color:#dc2626;'>Awaiting</span>"}</p>
-                        
-                        ${paymentContextHTML}
+                alert("Booking Registered Successfully ✅");
 
-                        <div class="job-actions">
-                            ${statusStr === 'assigned' ? `<button class="accept-btn" onclick="acceptJob('${safeId}')">Accept Order</button>` : ""}
-                            
-                            ${statusStr === 'accepted' ? `
-                                <input type="number" id="price-${safeId}" class="price-input" placeholder="Set ₹ Amount">
-                                <button class="price-btn" onclick="setPrice('${safeId}')">Submit</button>
-                            ` : ""}
-                            
-                            ${(statusStr === 'price_set' && b.paymentStatus !== 'Paid') ? `
-                                <button class="complete-btn" onclick="recordCashPayment('${safeId}')">Confirm Cash & Complete</button>
-                            ` : ""}
+                document.getElementById("bookingForm").reset();
+
+                if (activeUser.user_metadata?.full_name) {
+                    document.getElementById("name").value =
+                        activeUser.user_metadata.full_name;
+                }
+
+                loadTrackingLogs();
+
+            } catch (err) {
+                console.error(err);
+                alert("Backend connection failed");
+            }
+        });
+});
+
+// ==========================================
+// LOAD TRACKING
+// ==========================================
+async function loadTrackingLogs() {
+
+    if (!activeUser) return;
+
+    try {
+        const res = await fetch(
+            `${API_BASE}/customer/track/${activeUser.email}`
+        );
+
+        const data = await res.json();
+
+        const jobs = data.bookings || [];
+
+        const container =
+            document.getElementById("trackingContainer");
+
+        const reviewSelect =
+            document.getElementById("review-booking-id-select");
+
+        if (jobs.length === 0) {
+
+            container.innerHTML = `
+                <p class="text-xs text-slate-400 italic">
+                    No booking history found.
+                </p>
+            `;
+
+            document
+                .getElementById("review-submission-box")
+                .classList.add("hidden");
+
+            return;
+        }
+
+        document
+            .getElementById("review-submission-box")
+            .classList.remove("hidden");
+
+        container.innerHTML = "";
+        reviewSelect.innerHTML = "";
+
+        jobs.forEach(job => {
+
+            const safeId = job._id || job.id;
+
+            reviewSelect.innerHTML += `
+                <option value="${safeId}">
+                    ${job.serviceType}
+                </option>
+            `;
+
+            const status = (job.status || "pending").toLowerCase();
+
+            let badgeColor = "bg-amber-500";
+
+            if (status === "accepted") badgeColor = "bg-blue-600";
+            if (status === "price_set") badgeColor = "bg-purple-600";
+            if (status === "completed") badgeColor = "bg-emerald-600";
+
+            container.innerHTML += `
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
+
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">
+                                ${job.serviceType}
+                            </h4>
+
+                            <p class="text-[10px] text-slate-400 font-mono">
+                                ${safeId}
+                            </p>
                         </div>
+
+                        <span class="text-[10px] font-bold uppercase px-3 py-1 rounded-full text-white ${badgeColor}">
+                            ${status.replace("_", " ")}
+                        </span>
+
                     </div>
-                `;
 
-                if (statusStr === "completed") { closedBox.innerHTML += cardTemplate; } 
-                else { activeBox.innerHTML += cardTemplate; }
-            });
+                    <div class="space-y-2 text-xs text-slate-700">
 
-        } catch (err) {
-            console.error("Refresh error:", err);
-        }
+                        <div><strong>Problem:</strong> ${job.problemDescription}</div>
+                        <div><strong>Address:</strong> ${job.serviceAddress}</div>
+
+                        ${job.mechanicName ? `
+                            <div><strong>Mechanic:</strong> ${job.mechanicName}</div>
+                        ` : ""}
+
+                        ${job.estimatedPrice ? `
+                            <div class="font-bold text-blue-700">
+                                Estimated Price: ₹${job.estimatedPrice}
+                            </div>
+                        ` : ""}
+
+                        ${job.paymentStatus === "Paid" ? `
+                            <div class="text-emerald-700 font-bold">
+                                Payment Completed (${job.paymentMode || "N/A"})
+                            </div>
+                        ` : ""}
+
+                    </div>
+
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
     }
+}
 
-    function toggleDutyStatus() {
-        const text = document.getElementById("availabilityText");
-        const btn = document.getElementById("availabilityBtn");
-        if(btn.innerText === "Set State Offline") {
-            text.innerText = "Status Indicator: Offline";
-            text.style.color = "#ef4444";
-            btn.innerText = "Go Back Online";
-            btn.style.background = "#16a34a";
+// ==========================================
+// STAR RATING
+// ==========================================
+window.setRating = function (rating) {
+
+    selectedRating = rating;
+
+    document.querySelectorAll(".stars span").forEach((star, index) => {
+
+        if (index < rating) {
+            star.classList.remove("opacity-30");
+            star.classList.add("opacity-100");
         } else {
-            text.innerText = "Status Indicator: Online & Active";
-            text.style.color = "#16a34a";
-            btn.innerText = "Set State Offline";
-            btn.style.background = "#ef4444";
+            star.classList.add("opacity-30");
+            star.classList.remove("opacity-100");
         }
+    });
+};
+
+// ==========================================
+// SUBMIT REVIEW
+// ==========================================
+window.submitReview = async function () {
+
+    if (!activeUser) {
+        alert("Please login");
+        return;
     }
 
-    loadBookingFeedStream();
-    setInterval(() => loadBookingFeedStream(false), 6000); 
+    const bookingId =
+        document.getElementById("review-booking-id-select").value;
+
+    const review =
+        document.getElementById("reviewText").value.trim();
+
+    const customerName =
+        document.getElementById("name").value.trim();
+
+    if (selectedRating === 0) {
+        alert("Select star rating");
+        return;
+    }
+
+    if (!review) {
+        alert("Write review");
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/customer/submit-review`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    bookingId,
+                    customerName,
+                    userEmail: activeUser.email,
+                    rating: selectedRating,
+                    review
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "Review failed");
+            return;
+        }
+
+        alert("Review Submitted Successfully ✅");
+
+        document.getElementById("reviewText").value = "";
+        setRating(0);
+
+    } catch (err) {
+        console.error(err);
+        alert("Backend error");
+    }
+};
 </script>
 
 </body>
