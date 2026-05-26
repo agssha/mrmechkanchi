@@ -2,7 +2,8 @@ const { User, Admin, Booking, Review } = require("../models/model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-
+// ================= SECRET =================
+const JWT_SECRET = process.env.JWT_SECRET || "AISHU";
 
 // ================= STATUS CONSTANTS =================
 const STATUS = {
