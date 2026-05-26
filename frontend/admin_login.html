@@ -81,6 +81,7 @@
         // 🔥 UPDATED: Base API URL
         const API = "https://mrmechkanchi-1.onrender.com";
 
+
         async function loginAdmin() {
             const phone = document.getElementById("phone").value.trim();
             const password = document.getElementById("password").value;
@@ -95,7 +96,7 @@
 
             try {
                 // ✅ Sends request to https://mrmechkanchi-1.onrender.com/auth/admin-login
-                const res = await fetch(`${API}/auth/admin-login`, {
+                const res = await fetch(`${API}/api/auth/admin-login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ phone, password })

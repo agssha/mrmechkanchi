@@ -97,7 +97,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/auth/mechanic-login`, {
+        const res = await fetch(`${API_BASE}/api/auth/mechanic-login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

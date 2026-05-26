@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
             // Send request to your Node.js server
-            const response = await fetch(`${API_BASE}/book-repair`, {
+            const response = await fetch(`${API_BASE}/api/book-repair`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         try {
             // Fetch bookings from your Node.js API using the user's email
-            const res = await fetch(`${API_BASE}/track/${activeUser.email}`);
+            const res = await fetch(`${API_BASE}/api/track/${activeUser.email}`);
             const data = await res.json();
             const jobs = data.bookings || [];
             

@@ -398,7 +398,7 @@
 
     async function acceptJob(id) {
         try {
-            const res = await fetch(`${API_BASE}/accept-job`, { // Removed /mechanic since it's in API_BASE now
+            const res = await fetch(`${API_BASE}/api/accept-job`, { // Removed /mechanic since it's in API_BASE now
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -428,7 +428,7 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/set-charge`, {
+            const res = await fetch(`${API_BASE}/api/set-charge`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -452,7 +452,7 @@
         if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
 
         try {
-            const res = await fetch(`${API_BASE}/confirm-cash`, {
+            const res = await fetch(`${API_BASE}/api/confirm-cash`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -485,7 +485,7 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/my-jobs/${phone}`, {
+            const res = await fetch(`${API_BASE}/api/my-jobs/${phone}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();

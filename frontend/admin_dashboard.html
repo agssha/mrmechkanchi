@@ -226,7 +226,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     // 🔥 UPDATED: Base API URL
-    const API_BASE = "https://mrmechkanchi-1.onrender.com/admin";
+    const API_BASE = "https://mrmechkanchi-1.onrender.com/api/admin";
     const token = localStorage.getItem("token");
 
     // Memory structural caches
@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Fetch Mechanics Registry
     async function loadMechanics() {
         try {
-            const res = await fetch(`${API_BASE}/mechanics`, {
+            const res = await fetch(`${API_BASE}/api/mechanics`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
@@ -314,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("mech-password").value;
 
         try {
-            const res = await fetch(`${API_BASE}/create-mechanic`, {
+            const res = await fetch(`${API_BASE}/api/create-mechanic`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const newPassword = document.getElementById("reset-mech-pass").value;
 
         try {
-            const res = await fetch(`${API_BASE}/reset-mechanic-password`, {
+            const res = await fetch(`${API_BASE}/api/reset-mechanic-password`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -373,7 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return; // Skip this refresh cycle so we don't wipe their dropdown!
             }
 
-            const res = await fetch(`${API_BASE}/bookings`, {
+            const res = await fetch(`${API_BASE}/api/bookings`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
@@ -391,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadReviews() {
         const container = document.getElementById("reviews-feed-container");
         try {
-            const res = await fetch(`${API_BASE}/reviews`, {
+            const res = await fetch(`${API_BASE}/api/reviews`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const selectedName = matchMech ? matchMech.name : "Expert Professional";
 
                     try {
-                        const res = await fetch(`${API_BASE}/assign-job`, {
+                        const res = await fetch(`${API_BASE}/api/assign-job`, {
                             method: "PUT",
                             headers: {
                                 "Content-Type": "application/json",
