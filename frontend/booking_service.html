@@ -280,7 +280,7 @@ const supabaseClient = window.supabase.createClient(
 // ==========================================
 // GLOBALS
 // ==========================================
-const API_BASE = "https://mrmechkanchi-1.onrender.com";
+const API_BASE = "https://mrmechkanchi-1.onrender.com/api";
 
 let activeUser = null;
 let selectedRating = 0;
@@ -366,7 +366,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
         `;
 
-        // Auto fill name
         if (activeUser.user_metadata?.full_name) {
             document.getElementById("name").value =
                 activeUser.user_metadata.full_name;
@@ -381,14 +380,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }, 5000);
     }
 
-    // Initial session
     const {
         data: { session }
     } = await supabaseClient.auth.getSession();
 
     handleSession(session);
 
-    // Listen auth changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
         handleSession(session);
     });
@@ -412,21 +409,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 mobileNumber: document.getElementById("phone").value.trim(),
                 userEmail: activeUser.email,
                 userId: activeUser.id,
-                serviceAddress: document
-                    .getElementById("address")
-                    .value.trim(),
-                serviceType: document
-                    .getElementById("serviceType")
-                    .value,
-                problemDescription: document
-                    .getElementById("problem")
-                    .value.trim()
+                serviceAddress: document.getElementById("address").value.trim(),
+                serviceType: document.getElementById("serviceType").value,
+                problemDescription: document.getElementById("problem").value.trim()
             };
 
             try {
 
                 const response = await fetch(
-                    `${API_BASE}/api/book-repair`,
+                    `${API_BASE}/customer/book-repair`,
                     {
                         method: "POST",
                         headers: {
@@ -447,7 +438,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 document.getElementById("bookingForm").reset();
 
-                // refill name
                 if (activeUser.user_metadata?.full_name) {
                     document.getElementById("name").value =
                         activeUser.user_metadata.full_name;
@@ -472,20 +462,15 @@ async function loadTrackingLogs() {
     try {
 
         const res = await fetch(
-            `${API_BASE}/api/track/${activeUser.email}`
+            `${API_BASE}/customer/track/${activeUser.email}`
         );
 
         const data = await res.json();
 
         const jobs = data.bookings || [];
 
-        const container =
-            document.getElementById("trackingContainer");
-
-        const reviewSelect =
-            document.getElementById(
-                "review-booking-id-select"
-            );
+        const container = document.getElementById("trackingContainer");
+        const reviewSelect = document.getElementById("review-booking-id-select");
 
         if (jobs.length === 0) {
 
@@ -495,15 +480,13 @@ async function loadTrackingLogs() {
                 </p>
             `;
 
-            document
-                .getElementById("review-submission-box")
+            document.getElementById("review-submission-box")
                 .classList.add("hidden");
 
             return;
         }
 
-        document
-            .getElementById("review-submission-box")
+        document.getElementById("review-submission-box")
             .classList.remove("hidden");
 
         container.innerHTML = "";
@@ -523,17 +506,9 @@ async function loadTrackingLogs() {
 
             let badgeColor = "bg-amber-500";
 
-            if (status === "accepted") {
-                badgeColor = "bg-blue-600";
-            }
-
-            if (status === "price_set") {
-                badgeColor = "bg-purple-600";
-            }
-
-            if (status === "completed") {
-                badgeColor = "bg-emerald-600";
-            }
+            if (status === "accepted") badgeColor = "bg-blue-600";
+            if (status === "price_set") badgeColor = "bg-purple-600";
+            if (status === "completed") badgeColor = "bg-emerald-600";
 
             container.innerHTML += `
                 <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
@@ -558,47 +533,24 @@ async function loadTrackingLogs() {
 
                     <div class="space-y-2 text-xs text-slate-700">
 
-                        <div>
-                            <strong>Problem:</strong>
-                            ${job.problemDescription}
-                        </div>
+                        <div><strong>Problem:</strong> ${job.problemDescription}</div>
+                        <div><strong>Address:</strong> ${job.serviceAddress}</div>
 
-                        <div>
-                            <strong>Address:</strong>
-                            ${job.serviceAddress}
-                        </div>
+                        ${job.mechanicName ? `
+                            <div><strong>Mechanic:</strong> ${job.mechanicName}</div>
+                        ` : ""}
 
-                        ${
-                            job.mechanicName
-                                ? `
-                                <div>
-                                    <strong>Mechanic:</strong>
-                                    ${job.mechanicName}
-                                </div>
-                            `
-                                : ""
-                        }
+                        ${job.estimatedPrice ? `
+                            <div class="font-bold text-blue-700">
+                                Estimated Price: ₹${job.estimatedPrice}
+                            </div>
+                        ` : ""}
 
-                        ${
-                            job.estimatedPrice
-                                ? `
-                                <div class="font-bold text-blue-700">
-                                    Estimated Price:
-                                    ₹${job.estimatedPrice}
-                                </div>
-                            `
-                                : ""
-                        }
-
-                        ${
-                            job.paymentStatus === "Paid"
-                                ? `
-                                <div class="text-emerald-700 font-bold">
-                                    Payment Completed (${job.paymentMode || "N/A"})
-                                </div>
-                            `
-                                : ""
-                        }
+                        ${job.paymentStatus === "Paid" ? `
+                            <div class="text-emerald-700 font-bold">
+                                Payment Completed (${job.paymentMode || "N/A"})
+                            </div>
+                        ` : ""}
 
                     </div>
 
@@ -641,9 +593,7 @@ window.submitReview = async function () {
     }
 
     const bookingId =
-        document.getElementById(
-            "review-booking-id-select"
-        ).value;
+        document.getElementById("review-booking-id-select").value;
 
     const review =
         document.getElementById("reviewText").value.trim();
@@ -664,7 +614,7 @@ window.submitReview = async function () {
     try {
 
         const response = await fetch(
-            `${API_BASE}/api/submit-review`,
+            `${API_BASE}/customer/submit-review`,
             {
                 method: "POST",
                 headers: {
@@ -690,7 +640,6 @@ window.submitReview = async function () {
         alert("Review Submitted Successfully ✅");
 
         document.getElementById("reviewText").value = "";
-
         setRating(0);
 
     } catch (err) {
