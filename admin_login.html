@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2563eb;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box; /* ✅ Fixes layout alignment issues caused by padding */
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+        <h2>Admin Login</h2>
+
+        <input type="text" id="phone" placeholder="Phone Number">
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="loginAdmin()">Login</button>
+
+        <p class="error" id="error"></p>
+    </div>
+
+    <script>
+        // ✅ Points accurately to the base API path
+        const API = "http://localhost:3000/api";
+
+        async function loginAdmin() {
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value;
+            const error = document.getElementById("error");
+
+            error.innerText = "";
+
+            if (!phone || !password) {
+                error.innerText = "All fields required";
+                return;
+            }
+
+            try {
+                // ✅ UPDATE: Redirects matching your exact route config: /api/auth/admin-login
+                const res = await fetch(`${API}/auth/admin-login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    error.innerText = data.message || "Login failed";
+                    return;
+                }
+
+                // ✅ SAVE SEGREGATED STORAGE VALUES
+                localStorage.setItem("token", data.token);   
+                localStorage.setItem("role", "admin"); // Helpful flag to check role client-side
+
+                // Relocate screen straight into your admin panel dashboard view
+                window.location.href = "./admin_dashboard.html";
+
+            } catch (err) {
+                error.innerText = "Server not reachable. Is your API running?";
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Book Service - Mr. Mech Kanchi</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#001a42",
+                    "surface-container-highest": "#e3e1eb",
+                    "inverse-primary": "#b8c4ff",
+                    "on-secondary-fixed-variant": "#004395",
+                    "primary-fixed-dim": "#b8c4ff",
+                    "surface-bright": "#fbf8ff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb59a",
+                    "on-surface-variant": "#444653",
+                    "tertiary": "#611e00",
+                    "error-container": "#ffdad6",
+                    "secondary": "#0058be",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#1e40af",
+                    "tertiary-fixed": "#ffdbce",
+                    "on-error-container": "#93000a",
+                    "background": "#fbf8ff",
+                    "on-tertiary-container": "#ffa583",
+                    "on-primary-fixed": "#001453",
+                    "surface": "#fbf8ff",
+                    "on-secondary-container": "#fefcff",
+                    "on-primary-fixed-variant": "#173bab",
+                    "inverse-on-surface": "#f1f0fa",
+                    "surface-container": "#eeedf7",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "on-tertiary-fixed": "#380d00",
+                    "on-tertiary-fixed-variant": "#802a00",
+                    "secondary-container": "#2170e4",
+                    "primary-fixed": "#dde1ff",
+                    "surface-container-high": "#e8e7f1",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#00288e",
+                    "inverse-surface": "#2f3037",
+                    "on-primary-container": "#a8b8ff",
+                    "surface-tint": "#3755c3",
+                    "outline-variant": "#c4c5d5",
+                    "surface-variant": "#e3e1eb",
+                    "surface-dim": "#dad9e3",
+                    "outline": "#757684",
+                    "tertiary-container": "#872d00",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#f4f2fc",
+                    "on-background": "#1a1b22",
+                    "on-surface": "#1a1b22",
+                    "secondary-fixed": "#d8e2ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "80px",
+                    "container-max": "1280px",
+                    "gutter": "24px",
+                    "md": "24px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "xs": "4px",
+                    "lg": "48px"
+            }
+          },
+        },
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .stars span { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="bg-background font-body-lg text-on-background antialiased overflow-x-hidden">
+
+<header class="fixed top-0 w-full z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm font-inter">
+    <div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+        <div class="text-xl font-bold tracking-tight text-blue-900">
+            Mr. Mech Kanchi <span class="font-light text-slate-500">by AGS</span>
+        </div>
+        <nav class="hidden md:flex items-center space-x-8">
+            <a class="text-slate-600 hover:text-blue-600 transition-colors" href="./index.html">Home</a>
+            <a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1" href="./booking_service.html">Book Service</a>
+            <div id="auth-nav-status" class="text-sm font-medium text-slate-500"></div>
+        </nav>
+    </div>
+</header>
+
+<div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl space-y-6">
+        <div class="text-center">
+            <h3 class="text-2xl font-bold text-slate-900">Welcome Back</h3>
+            <p class="text-sm text-slate-500 mt-1">Please log in to register appliance repair tasks.</p>
+        </div>
+        
+        <div class="space-y-4 pt-2">
+            <button onclick="signInWithGoogle()" class="w-full bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-3 shadow-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+</div>
+
+<main id="main-content" class="pt-24 pb-xl px-6 hidden">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        
+        <div class="lg:col-span-5 flex flex-col justify-center space-y-lg">
+            <div class="space-y-sm">
+                <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-xs uppercase">
+                    Premium Home Care
+                </span>
+                <h1 class="text-4xl font-extrabold tracking-tight text-primary leading-tight">
+                    Expert Repairs, <br/>Delivered to Your Doorstep.
+                </h1>
+                <p class="text-slate-600 text-sm">
+                    Fast, reliable, and professional maintenance for your home appliances. Experience the premium utility service of Mr. Mech Kanchi.
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-sm">
+                <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3">
+                    <span class="material-symbols-outlined text-blue-600">verified</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">Certified</h4>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Engineers</p>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3">
+                    <span class="material-symbols-outlined text-orange-600">bolt</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">Swift</h4>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Response</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 space-y-8">
+            
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-8">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Book Your Service</h2>
+                    <p class="text-xs text-slate-400 mt-1">Fill in the details below and we'll assign a specialist right away.</p>
+                </div>
+
+                <form id="bookingForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 ml-1">Full Name</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">person</span>
+                                <input id="name" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm" placeholder="John Doe" type="text" />
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 ml-1">Phone Number</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">call</span>
+                                <input id="phone" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm font-medium text-slate-800" placeholder="Enter 10-digit number" type="tel" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 ml-1">Service Address</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-3 text-slate-400 text-lg">location_on</span>
+                            <textarea id="address" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm resize-none" placeholder="House No, Street Name, Area, Kanchipuram" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 ml-1">Service Type</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">category</span>
+                            <select id="serviceType" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm appearance-none cursor-pointer">
+                                <option value="">Select Appliance Type</option>
+                                <option value="AC Service & Repair">AC Service & Repair</option>
+                                <option value="Fridge Maintenance">Fridge Maintenance</option>
+                                <option value="Washing Machine Repair">Washing Machine Repair</option>
+                                <option value="Tailoring Machine Service">Tailoring Machine Service</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 ml-1">Problem Description</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-3 text-slate-400 text-lg">report_problem</span>
+                            <textarea id="problem" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm resize-none" placeholder="Briefly describe the issue you're facing..." rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition">
+                            <span>Confirm Repair Order Booking</span>
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-8 space-y-6">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue-600">route</span>
+                    Your Active Bookings & Tracking Logs
+                </h3>
+                <div id="trackingContainer" class="space-y-6">
+                    <p class="text-xs font-medium text-slate-400 italic">No historical entries identified for your user ID profile yet.</p>
+                </div>
+            </div>
+
+            <div id="review-submission-box" class="bg-white rounded-2xl shadow-md border border-slate-100 p-8 space-y-4 hidden">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Share Your Experience</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Submit quality scores directly to management evaluation.</p>
+                </div>
+                
+                <div class="flex flex-wrap gap-4 items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="text-xs font-bold text-slate-600">Select Booking Instance:</div>
+                    <select id="review-booking-id-select" class="text-xs border-slate-200 rounded-lg focus:ring-blue-500 bg-white">
+                        </select>
+                </div>
+
+                <div class="stars flex items-center gap-1 text-2xl cursor-pointer">
+                    <span onclick="setRating(1)" class="opacity-30">⭐</span>
+                    <span onclick="setRating(2)" class="opacity-30">⭐</span>
+                    <span onclick="setRating(3)" class="opacity-30">⭐</span>
+                    <span onclick="setRating(4)" class="opacity-30">⭐</span>
+                    <span onclick="setRating(5)" class="opacity-30">⭐</span>
+                </div>
+
+                <textarea id="reviewText" placeholder="Please leave advice context or review insights here..." class="w-full text-sm border-slate-200 rounded-xl h-24 resize-none focus:ring-blue-500"></textarea>
+                
+                <button onclick="submitReview()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition shadow-sm">
+                    File Audit Review
+                </button>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+// ==========================================
+// 1. INITIALIZE SUPABASE GLOBALLY 
+// ==========================================
+const supabaseUrl = 'https://vhdngekmhxldkyvrcblz.supabase.co'; 
+const supabaseAnonKey = 'sb_publishable_56HVVk9DzW8WDAT7LjzzTg_mJ34xQhL'; 
+let supabaseClient;
+
+try {
+    if (window.supabase) {
+        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    } else {
+        console.error("Supabase CDN failed to load in the <head>.");
+    }
+} catch (err) {
+    console.error("Initialization Error:", err);
+}
+
+// ==========================================
+// 2. AUTHENTICATION ACTIONS (GLOBAL)
+// ==========================================
+window.signInWithGoogle = async function() {
+    try {
+        if (!supabaseClient) {
+            alert("Error: Supabase library failed to load.");
+            return;
+        }
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: 'http://localhost:5500/booking_service.html' }
+        });
+        if (error) alert("Login Error: " + error.message);
+    } catch (err) {
+        alert("System Error: " + err.message);
+    }
+};
+
+window.signOut = async function() {
+    if (supabaseClient) {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) alert("Logout Error: " + error.message);
+        else window.location.reload();
+    }
+};
+
+// ==========================================
+// 3. MAIN PAGE LOGIC
+// ==========================================
+document.addEventListener("DOMContentLoaded", async () => {
+    // THIS IS YOUR BACKEND API BASE URL
+    const API_BASE = "http://localhost:3000/api/customer";
+    
+    const modal = document.getElementById("auth-modal");
+    const mainContent = document.getElementById("main-content");
+    let activeUser = null;
+    let selectedRating = 0;
+    let pollingInterval = null;
+
+    if (!supabaseClient) {
+        modal.classList.remove("hidden");
+        return;
+    }
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        handleSessionUpdate(session);
+    });
+
+    try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        handleSessionUpdate(session);
+    } catch (err) {
+        handleSessionUpdate(null); 
+    }
+
+    function handleSessionUpdate(session) {
+        if (!session) {
+            activeUser = null;
+            modal.classList.remove("hidden"); 
+            mainContent.classList.add("hidden"); 
+            if (pollingInterval) clearInterval(pollingInterval);
+        } else {
+            activeUser = session.user;
+            modal.classList.add("hidden"); 
+            mainContent.classList.remove("hidden"); 
+            
+            const nameInput = document.getElementById("name");
+            if (!nameInput.value && activeUser.user_metadata?.full_name) {
+                nameInput.value = activeUser.user_metadata.full_name;
+            }
+
+            const firstName = activeUser.user_metadata?.full_name?.split(' ')[0] || "User";
+            document.getElementById("auth-nav-status").innerHTML = `
+                <div class="flex items-center gap-4">
+                    <span class="text-slate-700">Hi, ${firstName}</span>
+                    <button onclick="signOut()" class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md">Logout</button>
+                </div>
+            `;
+            
+            initTrackingEngine();
+        }
+    }
+
+    // ==========================================
+    // 4. REAL BACKEND BOOKING SUBMISSION LOGIC
+    // ==========================================
+    document.getElementById("bookingForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        if (!activeUser) {
+            alert("You must be logged in to book a service.");
+            return;
+        }
+
+        // Construct the payload matching your Mongoose schema
+        const payload = {
+            name: document.getElementById("name").value.trim(),
+            mobileNumber: document.getElementById("phone").value.trim(),
+            userEmail: activeUser.email, 
+            userId: activeUser.id, 
+            serviceAddress: document.getElementById("address").value.trim(),
+            serviceType: document.getElementById("serviceType").value,
+            problemDescription: document.getElementById("problem").value.trim()
+        };
+
+        try {
+            // Send request to your Node.js server
+            const response = await fetch(`${API_BASE}/book-repair`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Booking Registered Successfully ✅");
+                document.getElementById("bookingForm").reset();
+                if (activeUser.user_metadata?.full_name) {
+                    document.getElementById("name").value = activeUser.user_metadata.full_name;
+                }
+                // Refresh logs to fetch the new booking from MongoDB
+                loadTrackingLogs();
+            } else {
+                const resData = await response.json();
+                alert(resData.message || "Failed to register booking.");
+            }
+        } catch (error) {
+            alert("Error connecting to the backend server. Is your Node server running?");
+            console.error(error);
+        }
+    });
+
+    // ==========================================
+    // 5. REAL BACKEND TRACKING SERVICE ENGINE
+    // ==========================================
+    async function loadTrackingLogs() {
+        if (!activeUser) return;
+        
+        try {
+            // Fetch bookings from your Node.js API using the user's email
+            const res = await fetch(`${API_BASE}/track/${activeUser.email}`);
+            const data = await res.json();
+            const jobs = data.bookings || [];
+            
+            const container = document.getElementById("trackingContainer");
+            const selectReviewBox = document.getElementById("review-booking-id-select");
+            
+            if (jobs.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 font-medium italic">No tracking entries identified in history logs.</p>`;
+                document.getElementById("review-submission-box").classList.add("hidden");
+                return;
+            }
+
+            document.getElementById("review-submission-box").classList.remove("hidden");
+            container.innerHTML = "";
+            selectReviewBox.innerHTML = "";
+
+            jobs.forEach(job => {
+                // MongoDB uses _id, so we fall back to it if id is undefined
+                const safeId = job._id || job.id;
+                selectReviewBox.innerHTML += `<option value="${safeId}">${job.serviceType} (ID: ..${String(safeId).slice(-6)})</option>`;
+                
+                const s = job.status.toLowerCase();
+                const step1 = "active";
+                const step2 = (s !== 'pending' && s !== 'assigned') ? 'active' : '';
+                const step3 = (s === 'price_set' || s === 'completed') ? 'active' : '';
+                const step4 = (s === 'completed') ? 'active' : '';
+
+                container.innerHTML += `
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm">${job.serviceType}</h4>
+                                <p class="text-[10px] text-slate-400 font-mono font-medium">Tracking ID: ${safeId}</p>
+                            </div>
+                            <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider text-white ${
+                                s === 'completed' ? 'bg-emerald-600' : s === 'price_set' ? 'bg-purple-600' : s === 'accepted' ? 'bg-blue-600' : 'bg-amber-500'
+                            }">${job.status.replace("_", " ")}</span>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 relative text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step1 ? 'bg-emerald-600' : 'bg-slate-200'}">1</div>
+                                <span class="text-[10px] font-bold text-slate-700 mt-1">Booked</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step2 ? 'bg-blue-600' : 'bg-slate-200'}">2</div>
+                                <span class="text-[10px] font-bold text-slate-700 mt-1">Accepted</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step3 ? 'bg-purple-600' : 'bg-slate-200'}">3</div>
+                                <span class="text-[10px] font-bold text-slate-700 mt-1">Priced</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step4 ? 'bg-emerald-600' : 'bg-slate-200'}">4</div>
+                                <span class="text-[10px] font-bold text-slate-700 mt-1">Closed</span>
+                            </div>
+                        </div>
+
+                        ${job.estimatedPrice > 0 ? `
+                            <div class="text-xs bg-white border border-slate-100 p-3 rounded-lg flex justify-between items-center">
+                                <span class="font-bold text-slate-600">Service Estimation Charge:</span>
+                                <span class="text-sm font-black text-slate-900">₹${job.estimatedPrice}</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${job.paymentStatus === 'Paid' ? `
+                            <div class="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold tracking-wide uppercase px-3 py-1 rounded text-center">
+                                Order Fully Settled Across Systems via [${job.paymentMode || 'N/A'}]
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        } catch (err) {
+            console.error("Tracking render error:", err);
+        }
+    }
+
+    // ==========================================
+    // 6. REAL BACKEND REVIEWS PROCESSING LOGIC
+    // ==========================================
+    window.setRating = function(rating) {
+        selectedRating = rating;
+        document.querySelectorAll(".stars span").forEach((star, index) => {
+            star.classList.toggle("opacity-100", index < rating);
+            star.classList.toggle("opacity-30", index >= rating);
+        });
+    };
+
+    window.submitReview = async function() {
+        const text = document.getElementById("reviewText").value.trim();
+        const bookingId = document.getElementById("review-booking-id-select").value;
+        const customerName = document.getElementById("name").value.trim() || activeUser?.user_metadata?.full_name || "Anonymous User";
+        
+        if (selectedRating === 0) {
+            alert("Please provide a star rating.");
+            return;
+        }
+        if (!text) {
+            alert("Review text is missing.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/submit-review`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    bookingId: bookingId,
+                    customerName: customerName,
+                    userEmail: activeUser.email,
+                    rating: selectedRating,
+                    review: text
+                })
+            });
+
+            if (res.ok) {
+                alert("Review submitted to database successfully!");
+                document.getElementById("reviewText").value = "";
+                setRating(0);
+            } else {
+                const resData = await res.json();
+                alert(resData.message || "Submission error.");
+            }
+        } catch (err) {
+            alert("Exception on backend server connection.");
+            console.error(err);
+        }
+    };
+
+    function initTrackingEngine() {
+        loadTrackingLogs();
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(loadTrackingLogs, 5000);
+    }
+});
+</script>
+</body>
+</html>

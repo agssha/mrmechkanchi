@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanic Dashboard - Mr. Mech Kanchi</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background: #f3f4f6;
+        }
+
+        /* SIDEBAR PANEL */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: #111827;
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+        }
+
+        .logo h2 {
+            color: #3b82f6;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu button {
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .menu button:hover {
+            background: #1f2937;
+        }
+
+        .menu .active {
+            background: #2563eb;
+            font-weight: bold;
+        }
+
+        /* MAIN WORKSPACE */
+        .main-content {
+            margin-left: 260px;
+            width: 100%;
+            padding: 25px;
+        }
+
+        /* TOPBAR CONTAINER */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .profile-box {
+            text-align: right;
+        }
+
+        .profile-box span {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* STATS SUMMARY BEN-TO GRID */
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card p {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .card h2 {
+            margin-top: 10px;
+            color: #2563eb;
+        }
+
+        /* JOB CARD ITEM STYLINGS */
+        .job-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 5px solid #d1d5db;
+        }
+        
+        .job-card.active-border { border-left-color: #2563eb; }
+        .job-card.priced-border { border-left-color: #8b5cf6; }
+        .job-card.completed-border { border-left-color: #16a34a; }
+
+        .job-card h3 {
+            color: #2563eb;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .badge-assigned { bg-color: #fef3c7; color: #d97706; background: #fef3c7; }
+        .badge-accepted { background: #dbeafe; color: #2563eb; }
+        .badge-priced { background: #f3e8ff; color: #7c3aed; }
+        .badge-completed { background: #d1fae5; color: #065f46; }
+
+        .job-card p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .job-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .job-actions button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .accept-btn { background: #2563eb; color: white; }
+        .accept-btn:hover { background: #1d4ed8; }
+        .price-btn { background: #7c3aed; color: white; }
+        .price-btn:hover { background: #6d28d9; }
+        .complete-btn { background: #16a34a; color: white; }
+        .complete-btn:hover { background: #15803d; }
+
+        .price-input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            width: 160px;
+            outline: none;
+        }
+
+        .payment-status-box {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .pay-cash { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+        .pay-online { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+
+        /* PROFILE SECTION CORES */
+        .profile-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        .profile-section h2 {
+            margin-bottom: 15px;
+            color: #111827;
+        }
+
+        .profile-section p {
+            margin: 12px 0;
+            font-size: 15px;
+        }
+
+        .availability-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            margin-top: 15px;
+            background: #16a34a;
+            transition: 0.2s;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR NAVIGATION MENU -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>🔧 Mr. Mech</h2>
+            <p>Technician Workspace Core</p>
+        </div>
+
+        <nav class="menu">
+            <button id="nav-dashboard" class="active" onclick="switchView('dashboard')">Dashboard Panel</button>
+            <button id="nav-myjobs" onclick="switchView('myjobs')">Active Job Queue</button>
+            <button id="nav-completed" onclick="switchView('completed')">History Logs</button>
+            <button id="nav-availability" onclick="switchView('availability')">Duty Status</button>
+            <button id="nav-profile" onclick="switchView('profile')">My Profile</button>
+            <button onclick="executeLogout()" style="color: #ef4444; font-weight: bold; margin-top: 20px;">Secure Logout</button>
+        </nav>
+    </aside>
+
+    <!-- MAIN WORKSPACE VIEWS -->
+    <main class="main-content">
+        
+        <!-- HEADER TOPBAR MODULE -->
+        <header class="topbar">
+            <div>
+                <h1 style="color: #111827;">Welcome Back 👋</h1>
+                <p id="mechType" style="color: #6b7280; font-size: 14px; margin-top: 2px;">Loading Type...</p>
+            </div>
+            <div class="profile-box">
+                <h3 id="mechName" style="color: #1e3a8a;">Loading Name...</h3>
+                <span>Service Partner Account</span>
+            </div>
+        </header>
+
+        <!-- SECTION BLOCK 1: MAIN METRIC DASHBOARD -->
+        <section id="dashboardSection">
+            <div class="stats">
+                <div class="card">
+                    <p>Assigned Run Tickets</p>
+                    <h2 id="totalJobs">0</h2>
+                </div>
+                <div class="card">
+                    <p>Completed Pipeline Tasks</p>
+                    <h2 id="completedJobs">0</h2>
+                </div>
+                <div class="card">
+                    <p>Open Pending Tickets</p>
+                    <h2 id="pendingJobs">0</h2>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION BLOCK 2: INTERACTIVE JOB MANAGEMENT STREAM -->
+        <section id="myJobsSection">
+            <h2 style="margin-bottom:20px; color: #1f2937;">Active Job Feed</h2>
+            <div id="jobsContainer"></div>
+        </section>
+
+        <!-- SECTION BLOCK 3: HISTORICAL CLOSED TRANSACTION LOGS -->
+        <section id="completedSection" class="hidden">
+            <h2 style="margin-bottom:20px; color: #1f2937;">Closed Job Archives</h2>
+            <div id="completedContainer"></div>
+        </section>
+
+        <!-- SECTION BLOCK 4: STAFF AVAILABILITY PARAMETER CONFIGURATION -->
+        <section id="availabilitySection" class="hidden">
+            <div class="profile-section">
+                <h2>Duty Status Monitor</h2>
+                <p id="availabilityText" style="font-weight: bold; color: #16a34a;">Status Indicator: Online & Active</p>
+                <button class="availability-btn" id="availabilityBtn" onclick="toggleDutyStatus()">Set State Offline</button>
+            </div>
+        </section>
+
+        <!-- SECTION BLOCK 5: PROFILE METADATA METRICS VIEWER -->
+        <section id="profileSection" class="hidden">
+            <div class="profile-section">
+                <h2>Account Attributes</h2>
+                <p><b>Technician Identifier:</b> <span id="profileName"></span></p>
+                <p><b>Communications Phone Reference:</b> <span id="profilePhone"></span></p>
+                <p><b>Department Specialization:</b> <span id="profileType"></span></p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+    // Central configurations wiring security components directly to server routes
+    const API_BASE = "http://localhost:3000/api";
+    const token = localStorage.getItem("token");
+    const phone = localStorage.getItem("mechanicPhone");
+
+    // Secure Routing Shield Verification Guard Route
+    if (!token || !phone) {
+        alert("Security clearance validation missing. Returning to verification gateway.");
+        window.location.href = "./mech_login.html";
+    }
+
+    // =========================================================================
+    // 🚀 DECODE JWT TOKEN TO EXTRACT MECHANIC ATTRIBUTES DYNAMICALLY
+    // =========================================================================
+    let parsedName = "Service Engineer";
+    let parsedType = "Appliance Specialist";
+
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const tokenData = JSON.parse(jsonPayload);
+        parsedName = tokenData.name || localStorage.getItem("name") || "Service Engineer";
+        parsedType = tokenData.mechanicType || localStorage.getItem("mechanicType") || "Appliance Specialist";
+    } catch (e) {
+        console.error("Token decoding fault handled gracefully:", e);
+        parsedName = localStorage.getItem("name") || "Service Engineer";
+        parsedType = localStorage.getItem("mechanicType") || "Appliance Specialist";
+    }
+
+    // UI ELEMENT INJECTIONS
+    document.getElementById("mechName").innerText = parsedName;
+    document.getElementById("mechType").innerText = parsedType;
+    document.getElementById("profileName").innerText = parsedName;
+    document.getElementById("profileType").innerText = parsedType;
+    document.getElementById("profilePhone").innerText = phone;
+
+    function executeLogout() {
+        if(!confirm("Are you sure you want to log out of the session?")) return;
+        localStorage.clear();
+        window.location.href = "./mech_login.html";
+    }
+
+    function switchView(target) {
+        document.getElementById("dashboardSection").classList.add("hidden");
+        document.getElementById("myJobsSection").classList.add("hidden");
+        document.getElementById("completedSection").classList.add("hidden");
+        document.getElementById("availabilitySection").classList.add("hidden");
+        document.getElementById("profileSection").classList.add("hidden");
+        
+        document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
+
+        if (target === 'dashboard') {
+            document.getElementById("dashboardSection").classList.remove("hidden");
+            document.getElementById("myJobsSection").classList.remove("hidden");
+            document.getElementById("nav-dashboard").classList.add("active");
+        } else {
+            document.getElementById(`${target}Section`).classList.remove("hidden");
+            document.getElementById(`nav-${target}`).classList.add("active");
+        }
+    }
+
+    // =========================================================================
+    // CORE PIPELINE ACTION CONTROLLERS
+    // =========================================================================
+
+    async function acceptJob(id) {
+        try {
+            const res = await fetch(`${API_BASE}/mechanic/accept-job`, { // Make sure this matches your routes! Usually it's just /accept-job
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    bookingId: id // FIX: Send the exact ID string passed into the function
+                })
+            });
+
+            if(res.ok) {
+                loadBookingFeedStream(true); // Force refresh
+            } else {
+                const data = await res.json();
+                alert(data.message || "Accept job request mutation refused.");
+            }
+        } catch (err) {
+            console.error("Pipeline write failure:", err);
+        }
+    }
+
+    async function setPrice(id) {
+        const pricingInput = document.getElementById(`price-${id}`).value;
+        if (!pricingInput || Number(pricingInput) <= 0) {
+            alert("Please enter a valid currency estimation amount value.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/mechanic/set-charge`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ bookingId: id, price: Number(pricingInput) })
+            });
+
+            if(res.ok) {
+                loadBookingFeedStream(true); // Force refresh
+            } else {
+                const data = await res.json();
+                alert(data.message || "Pricing submission context rejected.");
+            }
+        } catch (err) {
+            console.error("Pricing transaction commit crash:", err);
+        }
+    }
+
+    async function recordCashPayment(id) {
+        if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/mechanic/confirm-cash`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ bookingId: id })
+            });
+
+            if(res.ok) {
+                alert("Cash payment collection verified!");
+                loadBookingFeedStream(true); // Force refresh
+            } else {
+                const data = await res.json();
+                alert(data.message || "Payment status processing mutation failure.");
+            }
+        } catch (err) {
+            console.error("Payment registration route trace drop:", err);
+        }
+    }
+
+    // =========================================================================
+    // REFRESH LOGIC WITH INPUT GUARD
+    // =========================================================================
+    async function loadBookingFeedStream(force = false) {
+        // 🛡️ THE FIX: If mechanic is typing in a price box, don't refresh the HTML
+        const activeElement = document.activeElement;
+        if (!force && activeElement && activeElement.classList.contains('price-input')) {
+            console.log("Mechanic is typing... background refresh paused.");
+            return; 
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/mechanic/my-jobs/${phone}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const bookings = data.bookings || [];
+
+            const activeBox = document.getElementById("jobsContainer");
+            const closedBox = document.getElementById("completedContainer");
+
+            activeBox.innerHTML = "";
+            closedBox.innerHTML = "";
+
+            document.getElementById("totalJobs").innerText = bookings.length;
+            document.getElementById("completedJobs").innerText = bookings.filter(b => b.status === "completed").length;
+            document.getElementById("pendingJobs").innerText = bookings.filter(b => b.status !== "completed").length;
+
+            if (bookings.length === 0) {
+                activeBox.innerHTML = `<p style="font-size: 13px; color: #9ca3af; font-style: italic;">No active jobs.</p>`;
+                closedBox.innerHTML = `<p style="font-size: 13px; color: #9ca3af; font-style: italic;">No history.</p>`;
+                return;
+            }
+
+            bookings.forEach(b => {
+                const statusStr = String(b.status).toLowerCase();
+                const isMasked = statusStr === 'assigned' || statusStr === 'pending';
+                
+                // FIX: Grab the correct MongoDB ID safely
+                const safeId = b._id || b.id;
+                
+                let cardClass = "job-card ";
+                let badgeClass = "status-badge ";
+                if (statusStr === 'completed') { cardClass += "completed-border"; badgeClass += "badge-completed"; }
+                else if (statusStr === 'price_set') { cardClass += "priced-border"; badgeClass += "badge-priced"; }
+                else if (statusStr === 'accepted') { cardClass += "active-border"; badgeClass += "badge-accepted"; }
+                else { badgeClass += "badge-assigned"; }
+
+                let paymentContextHTML = "";
+                if (b.paymentStatus === "Paid") {
+                    const styleMode = b.paymentMode === "Cash" ? "pay-cash" : "pay-online";
+                    paymentContextHTML = `<div class="payment-status-box ${styleMode}">PAID via ${b.paymentMode.toUpperCase()}</div>`;
+                }
+
+                const cardTemplate = `
+                    <div class="${cardClass}">
+                        <h3>
+                            <span>${b.serviceType || "Repair Ticket"}</span>
+                            <span class="${badgeClass}">${b.status.replace("_", " ")}</span>
+                        </h3>
+                        <p><b>Customer:</b> ${b.name || "Customer"}</p>
+                        <p><b>Phone:</b> ${isMasked ? "🔒 Hidden" : `<a href="tel:${b.mobileNumber}" style="color: #2563eb; font-weight: bold;">${b.mobileNumber}</a>`}</p>
+                        <p><b>Address:</b> ${b.serviceAddress}</p>
+                        <p><b>Problem:</b> <span style="color: #4b5563; font-style: italic;">"${b.problemDescription}"</span></p>
+                        <p><b>Invoice:</b> ${b.estimatedPrice > 0 ? `<b>₹${b.estimatedPrice}</b>` : "<span style='color:#dc2626;'>Awaiting</span>"}</p>
+                        
+                        ${paymentContextHTML}
+
+                        <div class="job-actions">
+                            ${statusStr === 'assigned' ? `<button class="accept-btn" onclick="acceptJob('${safeId}')">Accept Order</button>` : ""}
+                            
+                            ${statusStr === 'accepted' ? `
+                                <input type="number" id="price-${safeId}" class="price-input" placeholder="Set ₹ Amount">
+                                <button class="price-btn" onclick="setPrice('${safeId}')">Submit</button>
+                            ` : ""}
+                            
+                            ${(statusStr === 'price_set' && b.paymentStatus !== 'Paid') ? `
+                                <button class="complete-btn" onclick="recordCashPayment('${safeId}')">Confirm Cash & Complete</button>
+                            ` : ""}
+                        </div>
+                    </div>
+                `;
+
+                if (statusStr === "completed") { closedBox.innerHTML += cardTemplate; } 
+                else { activeBox.innerHTML += cardTemplate; }
+            });
+
+        } catch (err) {
+            console.error("Refresh error:", err);
+        }
+    }
+
+    function toggleDutyStatus() {
+        const text = document.getElementById("availabilityText");
+        const btn = document.getElementById("availabilityBtn");
+        if(btn.innerText === "Set State Offline") {
+            text.innerText = "Status Indicator: Offline";
+            text.style.color = "#ef4444";
+            btn.innerText = "Go Back Online";
+            btn.style.background = "#16a34a";
+        } else {
+            text.innerText = "Status Indicator: Online & Active";
+            text.style.color = "#16a34a";
+            btn.innerText = "Set State Offline";
+            btn.style.background = "#ef4444";
+        }
+    }
+
+    loadBookingFeedStream();
+    setInterval(() => loadBookingFeedStream(false), 6000); 
+</script>
+
+</body>
+</html>
