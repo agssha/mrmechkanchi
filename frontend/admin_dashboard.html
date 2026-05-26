@@ -226,38 +226,26 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    // =====================================================
-    // FIXED API BASE URL
-    // =====================================================
     const API_BASE = "https://mrmechkanchi-1.onrender.com";
-
     const token = localStorage.getItem("token");
 
     let mechanics = [];
     let mechanicMap = {};
     let bookingsCache = [];
 
-    // =====================================================
-    // AUTH CHECK
-    // =====================================================
     if (!token) {
         alert("Please login again.");
         window.location.href = "/admin_login.html";
         return;
     }
 
-    // =====================================================
-    // TAB SWITCH
-    // =====================================================
-    window.switchTab = function(targetTab) {
+    window.switchTab = function (targetTab) {
 
         document.querySelectorAll(".tab-layer").forEach(layer => {
             layer.classList.add("hidden");
         });
 
-        document
-            .getElementById(`tab-content-${targetTab}`)
-            .classList.remove("hidden");
+        document.getElementById(`tab-content-${targetTab}`).classList.remove("hidden");
 
         ["bookings", "mechanics", "reviews"].forEach(tab => {
             document.getElementById(`btn-tab-${tab}`).className =
@@ -267,51 +255,32 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById(`btn-tab-${targetTab}`).className =
             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 border-r-4 border-blue-700 font-semibold transition-all";
 
-        if (targetTab === "mechanics") {
-            loadMechanics();
-        }
-
-        if (targetTab === "reviews") {
-            loadReviews();
-        }
+        if (targetTab === "mechanics") loadMechanics();
+        if (targetTab === "reviews") loadReviews();
+        if (targetTab === "bookings") loadBookings();
     };
 
-    // =====================================================
-    // LOGOUT
-    // =====================================================
     window.logoutAdmin = function () {
         localStorage.clear();
         window.location.href = "/admin_login.html";
     };
 
-    // =====================================================
-    // LOAD MECHANICS
-    // =====================================================
     async function loadMechanics() {
-
         try {
-
-            const res = await fetch(
-                `${API_BASE}/api/admin/mechanics`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/mechanics`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             const data = await res.json();
 
             mechanics = data.mechanics || [];
-
             mechanicMap = {};
 
             mechanics.forEach(m => {
                 mechanicMap[m.phone] = m;
             });
 
-            document.getElementById("metric-mechanics").innerText =
-                mechanics.length;
+            document.getElementById("metric-mechanics").innerText = mechanics.length;
 
             renderMechanics();
 
@@ -320,43 +289,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // =====================================================
-    // REGISTER MECHANIC
-    // =====================================================
     window.handleMechanicRegistration = async function (e) {
-
         e.preventDefault();
 
-        const name =
-            document.getElementById("mech-name").value.trim();
-
-        const phone =
-            document.getElementById("mech-phone").value.trim();
-
-        const mechanicType =
-            document.getElementById("mech-type").value.trim();
-
-        const password =
-            document.getElementById("mech-password").value;
+        const name = document.getElementById("mech-name").value.trim();
+        const phone = document.getElementById("mech-phone").value.trim();
+        const mechanicType = document.getElementById("mech-type").value.trim();
+        const password = document.getElementById("mech-password").value;
 
         try {
-
-            const res = await fetch(
-                `${API_BASE}/api/admin/create-mechanic`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        name,
-                        phone,
-                        mechanicType,
-                        password
-                    })
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/create-mechanic`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, phone, mechanicType, password })
+            });
 
             const data = await res.json();
 
@@ -366,11 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             alert("Mechanic created successfully");
-
-            document
-                .getElementById("mechanic-reg-form")
-                .reset();
-
+            document.getElementById("mechanic-reg-form").reset();
             loadMechanics();
 
         } catch (err) {
@@ -378,71 +323,43 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // =====================================================
-    // RESET PASSWORD
-    // =====================================================
     window.handleAdminPasswordReset = async function (e) {
-
         e.preventDefault();
 
-        const mechanicPhone =
-            document.getElementById("reset-mech-phone").value.trim();
-
-        const newPassword =
-            document.getElementById("reset-mech-pass").value;
+        const mechanicPhone = document.getElementById("reset-mech-phone").value.trim();
+        const newPassword = document.getElementById("reset-mech-pass").value;
 
         try {
-
-            const res = await fetch(
-                `${API_BASE}/api/admin/reset-mechanic-password`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        mechanicPhone,
-                        newPassword
-                    })
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/reset-mechanic-password`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ mechanicPhone, newPassword })
+            });
 
             const data = await res.json();
-
             alert(data.message);
 
-            if (res.ok) {
-                e.target.reset();
-            }
+            if (res.ok) e.target.reset();
 
         } catch (err) {
             console.error(err);
         }
     };
 
-    // =====================================================
-    // LOAD BOOKINGS
-    // =====================================================
     async function loadBookings() {
-
         try {
-
-            const res = await fetch(
-                `${API_BASE}/api/admin/bookings`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/bookings`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             const data = await res.json();
 
             bookingsCache = data.bookings || [];
 
             updateMetrics();
-
             renderBookings();
 
         } catch (err) {
@@ -450,44 +367,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // =====================================================
-    // LOAD REVIEWS
-    // =====================================================
     async function loadReviews() {
-
         try {
-
-            const res = await fetch(
-                `${API_BASE}/api/admin/reviews`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/reviews`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             const data = await res.json();
-
             const reviews = data.reviews || [];
 
-            const container =
-                document.getElementById("reviews-feed-container");
+            const container = document.getElementById("reviews-feed-container");
 
-            if (reviews.length === 0) {
-                container.innerHTML =
-                    "<p>No reviews available</p>";
+            if (!reviews.length) {
+                container.innerHTML = "<p>No reviews available</p>";
                 return;
             }
 
             container.innerHTML = reviews.map(r => `
                 <div class="bg-slate-50 p-4 rounded-xl border">
                     <h3 class="font-bold">${r.customerName || "Customer"}</h3>
-                    <p class="text-sm text-slate-500">
-                        ${r.review}
-                    </p>
-                    <p class="text-xs mt-2">
-                        Rating: ${r.rating}/5
-                    </p>
+                    <p class="text-sm text-slate-500">${r.review}</p>
+                    <p class="text-xs mt-2">Rating: ${r.rating}/5</p>
                 </div>
             `).join("");
 
@@ -496,93 +396,61 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // =====================================================
-    // UPDATE METRICS
-    // =====================================================
     function updateMetrics() {
 
-        const pending =
-            bookingsCache.filter(
-                b => b.status === "pending"
-            ).length;
-
-        document.getElementById("metric-pending").innerText =
-            pending;
+        const pending = bookingsCache.filter(b => b.status === "pending").length;
+        document.getElementById("metric-pending").innerText = pending;
 
         let revenue = 0;
 
         bookingsCache.forEach(b => {
             if (b.paymentStatus === "Paid") {
-                revenue += (b.estimatedPrice || b.price || 0);
+                revenue += Number(b.estimatedPrice || b.price || 0);
             }
         });
 
-        document.getElementById("metric-revenue").innerText =
-            `₹${revenue}`;
+        document.getElementById("metric-revenue").innerText = `₹${revenue}`;
     }
 
-    // =====================================================
-    // STATUS BADGE
-    // =====================================================
     function getBadge(status) {
-
         switch (status) {
-
-            case "pending":
-                return "bg-yellow-100 text-yellow-700";
-
-            case "assigned":
-                return "bg-purple-100 text-purple-700";
-
-            case "completed":
-                return "bg-green-100 text-green-700";
-
-            default:
-                return "bg-slate-100 text-slate-700";
+            case "pending": return "bg-yellow-100 text-yellow-700";
+            case "assigned": return "bg-purple-100 text-purple-700";
+            case "completed": return "bg-green-100 text-green-700";
+            default: return "bg-slate-100 text-slate-700";
         }
     }
 
-    // =====================================================
-    // RENDER BOOKINGS
-    // =====================================================
     function renderBookings() {
 
-        const tbody =
-            document.getElementById("bookings-table-body");
-
+        const tbody = document.getElementById("bookings-table-body");
         tbody.innerHTML = "";
 
-        if (bookingsCache.length === 0) {
-
+        if (!bookingsCache.length) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center py-10">
-                        No bookings found
-                    </td>
-                </tr>
-            `;
-
+                    <td colspan="5" class="text-center py-10">No bookings found</td>
+                </tr>`;
             return;
         }
 
         bookingsCache.forEach(b => {
 
-            const row = document.createElement("tr");
+            const assigned = Boolean(b.assignedMechanicId || b.mechanicName);
 
-            const assigned = !!b.assignedMechanicId;
+            const row = document.createElement("tr");
 
             row.innerHTML = `
                 <td class="px-6 py-4">
-                    <div class="font-bold">
-                        ${b.name || "Customer"}
-                    </div>
-                    <div class="text-xs text-slate-500">
-                        ${b.mobileNumber || ""}
-                    </div>
+                    <div class="font-bold">${b.name || "Customer"}</div>
+                    <div class="text-xs text-slate-500">${b.mobileNumber || ""}</div>
                 </td>
 
                 <td class="px-6 py-4">
                     ${b.problemDescription || ""}
+                    <div class="text-xs text-emerald-600 mt-1">
+                        ₹${b.estimatedPrice || b.price || 0}
+                    </div>
                 </td>
 
                 <td class="px-6 py-4">
@@ -592,86 +460,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
 
                 <td class="px-6 py-4">
-                    ${
-                        assigned
-                        ?
-                        b.mechanicName
-                        :
-                        `
+                    ${assigned ? b.mechanicName : `
                         <select class="mechanicSelect border rounded p-2 text-xs">
                             <option value="">Select</option>
-                            ${mechanics.map(m => `
-                                <option value="${m.phone}">
-                                    ${m.name}
-                                </option>
-                            `).join("")}
+                            ${mechanics.map(m => `<option value="${m.phone}">${m.name}</option>`).join("")}
                         </select>
-                        `
-                    }
+                    `}
                 </td>
 
                 <td class="px-6 py-4">
-                    ${
-                        assigned
-                        ?
-                        `<span class="text-xs text-green-600">Assigned</span>`
-                        :
-                        `
+                    ${assigned ? `
+                        <span class="text-xs text-green-600">Assigned</span>
+                    ` : `
                         <button class="assignBtn bg-blue-600 text-white px-4 py-2 rounded text-xs">
                             Assign
                         </button>
-                        `
-                    }
+                    `}
                 </td>
             `;
 
             if (!assigned) {
-
-                const btn =
-                    row.querySelector(".assignBtn");
-
-                const select =
-                    row.querySelector(".mechanicSelect");
+                const btn = row.querySelector(".assignBtn");
+                const select = row.querySelector(".mechanicSelect");
 
                 btn.onclick = async () => {
 
                     const mechanicPhone = select.value;
+                    if (!mechanicPhone) return alert("Select mechanic");
 
-                    if (!mechanicPhone) {
-                        alert("Select mechanic");
-                        return;
-                    }
+                    const mech = mechanicMap[mechanicPhone];
 
-                    const mech =
-                        mechanicMap[mechanicPhone];
+                    const res = await fetch(`${API_BASE}/api/admin/assign-job`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            bookingId: b._id,
+                            mechanicPhone,
+                            mechanicName: mech?.name || ""
+                        })
+                    });
 
-                    try {
+                    const data = await res.json();
+                    alert(data.message);
 
-                        const res = await fetch(
-                            `${API_BASE}/api/admin/assign-job`,
-                            {
-                                method: "PUT",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    bookingId: b._id,
-                                    mechanicPhone,
-                                    mechanicName: mech.name
-                                })
-                            }
-                        );
-
-                        const data = await res.json();
-
-                        alert(data.message);
-
-                        loadBookings();
-
-                    } catch (err) {
-                        console.error(err);
-                    }
+                    loadBookings();
                 };
             }
 
@@ -679,50 +514,27 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // =====================================================
-    // RENDER MECHANICS
-    // =====================================================
     function renderMechanics() {
-
-        const grid =
-            document.getElementById("mechanics-list-grid");
-
+        const grid = document.getElementById("mechanics-list-grid");
         grid.innerHTML = "";
 
         mechanics.forEach(m => {
-
             const card = document.createElement("div");
-
-            card.className =
-                "bg-slate-50 border rounded-xl p-4";
+            card.className = "bg-slate-50 border rounded-xl p-4";
 
             card.innerHTML = `
-                <h3 class="font-bold">
-                    ${m.name}
-                </h3>
-
-                <p class="text-sm text-slate-500">
-                    ${m.mechanicType}
-                </p>
-
-                <p class="text-xs mt-2">
-                    ${m.phone}
-                </p>
+                <h3 class="font-bold">${m.name}</h3>
+                <p class="text-sm text-slate-500">${m.mechanicType}</p>
+                <p class="text-xs mt-2">${m.phone}</p>
             `;
 
             grid.appendChild(card);
         });
     }
 
-    // =====================================================
-    // INIT
-    // =====================================================
     async function init() {
-
         await loadMechanics();
-
         await loadBookings();
-
         setInterval(loadBookings, 8000);
     }
 
