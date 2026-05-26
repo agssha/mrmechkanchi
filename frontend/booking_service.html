@@ -267,300 +267,437 @@
 
 <script>
 // ==========================================
-// 1. INITIALIZE SUPABASE GLOBALLY 
+// SUPABASE CONFIG
 // ==========================================
-const supabaseUrl = 'https://vhdngekmhxldkyvrcblz.supabase.co'; 
-const supabaseAnonKey = 'sb_publishable_56HVVk9DzW8WDAT7LjzzTg_mJ34xQhL'; 
-let supabaseClient;
+const supabaseUrl = 'https://vhdngekmhxldkyvrcblz.supabase.co';
+const supabaseAnonKey = 'sb_publishable_56HVVk9DzW8WDAT7LjzzTg_mJ34xQhL';
 
-try {
-    if (window.supabase) {
-        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-    } else {
-        console.error("Supabase CDN failed to load in the <head>.");
-    }
-} catch (err) {
-    console.error("Initialization Error:", err);
-}
+const supabaseClient = window.supabase.createClient(
+    supabaseUrl,
+    supabaseAnonKey
+);
 
 // ==========================================
-// 2. AUTHENTICATION ACTIONS (GLOBAL)
+// GLOBALS
 // ==========================================
-window.signInWithGoogle = async function() {
+const API_BASE = "https://mrmechkanchi-1.onrender.com";
+
+let activeUser = null;
+let selectedRating = 0;
+let pollingInterval = null;
+
+// ==========================================
+// GOOGLE LOGIN
+// ==========================================
+window.signInWithGoogle = async function () {
     try {
-        if (!supabaseClient) {
-            alert("Error: Supabase library failed to load.");
-            return;
-        }
         const { error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: 'https://mrmechkanchi-2.onrender.com/booking_service.html' }
+            provider: "google",
+            options: {
+                redirectTo:
+                    "https://mrmechkanchi-2.onrender.com/booking_service.html"
+            }
         });
-        if (error) alert("Login Error: " + error.message);
-    } catch (err) {
-        alert("System Error: " + err.message);
-    }
-};
 
-window.signOut = async function() {
-    if (supabaseClient) {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) alert("Logout Error: " + error.message);
-        else window.location.reload();
+        if (error) {
+            alert(error.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Google Login Failed");
     }
 };
 
 // ==========================================
-// 3. MAIN PAGE LOGIC
+// LOGOUT
+// ==========================================
+window.signOut = async function () {
+    try {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+// ==========================================
+// AUTH STATE
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
-    // 🔥 UPDATED: YOUR BACKEND API BASE URL
-    const API_BASE = "https://mrmechkanchi-1.onrender.com";
-    
+
     const modal = document.getElementById("auth-modal");
     const mainContent = document.getElementById("main-content");
-    let activeUser = null;
-    let selectedRating = 0;
-    let pollingInterval = null;
 
-    if (!supabaseClient) {
-        modal.classList.remove("hidden");
-        return;
-    }
+    async function handleSession(session) {
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        handleSessionUpdate(session);
-    });
-
-    try {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        if (error) throw error;
-        handleSessionUpdate(session);
-    } catch (err) {
-        handleSessionUpdate(null); 
-    }
-
-    function handleSessionUpdate(session) {
         if (!session) {
             activeUser = null;
-            modal.classList.remove("hidden"); 
-            mainContent.classList.add("hidden"); 
-            if (pollingInterval) clearInterval(pollingInterval);
-        } else {
-            activeUser = session.user;
-            modal.classList.add("hidden"); 
-            mainContent.classList.remove("hidden"); 
-            
-            const nameInput = document.getElementById("name");
-            if (!nameInput.value && activeUser.user_metadata?.full_name) {
-                nameInput.value = activeUser.user_metadata.full_name;
+
+            modal.classList.remove("hidden");
+            mainContent.classList.add("hidden");
+
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
             }
 
-            const firstName = activeUser.user_metadata?.full_name?.split(' ')[0] || "User";
-            document.getElementById("auth-nav-status").innerHTML = `
-                <div class="flex items-center gap-4">
-                    <span class="text-slate-700">Hi, ${firstName}</span>
-                    <button onclick="signOut()" class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md">Logout</button>
-                </div>
-            `;
-            
-            initTrackingEngine();
-        }
-    }
-
-    // ==========================================
-    // 4. REAL BACKEND BOOKING SUBMISSION LOGIC
-    // ==========================================
-    document.getElementById("bookingForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        if (!activeUser) {
-            alert("You must be logged in to book a service.");
             return;
         }
 
-        // Construct the payload matching your Mongoose schema
-        const payload = {
-            name: document.getElementById("name").value.trim(),
-            mobileNumber: document.getElementById("phone").value.trim(),
-            userEmail: activeUser.email, 
-            userId: activeUser.id, 
-            serviceAddress: document.getElementById("address").value.trim(),
-            serviceType: document.getElementById("serviceType").value,
-            problemDescription: document.getElementById("problem").value.trim()
-        };
+        activeUser = session.user;
 
-        try {
-            // Send request to your Node.js server
-            const response = await fetch(`${API_BASE}/api/book-repair`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+        modal.classList.add("hidden");
+        mainContent.classList.remove("hidden");
 
-            if (response.ok) {
-                alert("Booking Registered Successfully ✅");
-                document.getElementById("bookingForm").reset();
-                if (activeUser.user_metadata?.full_name) {
-                    document.getElementById("name").value = activeUser.user_metadata.full_name;
-                }
-                // Refresh logs to fetch the new booking from MongoDB
-                loadTrackingLogs();
-            } else {
-                const resData = await response.json();
-                alert(resData.message || "Failed to register booking.");
-            }
-        } catch (error) {
-            alert("Error connecting to the backend server. Is your Node server running?");
-            console.error(error);
+        const firstName =
+            activeUser.user_metadata?.full_name?.split(" ")[0] || "User";
+
+        document.getElementById("auth-nav-status").innerHTML = `
+            <div class="flex items-center gap-4">
+                <span class="text-slate-700">
+                    Hi, ${firstName}
+                </span>
+
+                <button
+                    onclick="signOut()"
+                    class="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md"
+                >
+                    Logout
+                </button>
+            </div>
+        `;
+
+        // Auto fill name
+        if (activeUser.user_metadata?.full_name) {
+            document.getElementById("name").value =
+                activeUser.user_metadata.full_name;
         }
+
+        loadTrackingLogs();
+
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        pollingInterval = setInterval(() => {
+            loadTrackingLogs();
+        }, 5000);
+    }
+
+    // Initial session
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+
+    handleSession(session);
+
+    // Listen auth changes
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        handleSession(session);
     });
 
     // ==========================================
-    // 5. REAL BACKEND TRACKING SERVICE ENGINE
+    // BOOKING FORM
     // ==========================================
-    async function loadTrackingLogs() {
-        if (!activeUser) return;
-        
-        try {
-            // Fetch bookings from your Node.js API using the user's email
-            const res = await fetch(`${API_BASE}/api/track/${activeUser.email}`);
-            const data = await res.json();
-            const jobs = data.bookings || [];
-            
-            const container = document.getElementById("trackingContainer");
-            const selectReviewBox = document.getElementById("review-booking-id-select");
-            
-            if (jobs.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 font-medium italic">No tracking entries identified in history logs.</p>`;
-                document.getElementById("review-submission-box").classList.add("hidden");
+    document
+        .getElementById("bookingForm")
+        .addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+            if (!activeUser) {
+                alert("Please login first");
                 return;
             }
 
-            document.getElementById("review-submission-box").classList.remove("hidden");
-            container.innerHTML = "";
-            selectReviewBox.innerHTML = "";
+            const payload = {
+                name: document.getElementById("name").value.trim(),
+                mobileNumber: document.getElementById("phone").value.trim(),
+                userEmail: activeUser.email,
+                userId: activeUser.id,
+                serviceAddress: document
+                    .getElementById("address")
+                    .value.trim(),
+                serviceType: document
+                    .getElementById("serviceType")
+                    .value,
+                problemDescription: document
+                    .getElementById("problem")
+                    .value.trim()
+            };
 
-            jobs.forEach(job => {
-                // MongoDB uses _id, so we fall back to it if id is undefined
-                const safeId = job._id || job.id;
-                selectReviewBox.innerHTML += `<option value="${safeId}">${job.serviceType} (ID: ..${String(safeId).slice(-6)})</option>`;
-                
-                const s = job.status.toLowerCase();
-                const step1 = "active";
-                const step2 = (s !== 'pending' && s !== 'assigned') ? 'active' : '';
-                const step3 = (s === 'price_set' || s === 'completed') ? 'active' : '';
-                const step4 = (s === 'completed') ? 'active' : '';
+            try {
 
-                container.innerHTML += `
-                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
-                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                            <div>
-                                <h4 class="font-bold text-slate-900 text-sm">${job.serviceType}</h4>
-                                <p class="text-[10px] text-slate-400 font-mono font-medium">Tracking ID: ${safeId}</p>
-                            </div>
-                            <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider text-white ${
-                                s === 'completed' ? 'bg-emerald-600' : s === 'price_set' ? 'bg-purple-600' : s === 'accepted' ? 'bg-blue-600' : 'bg-amber-500'
-                            }">${job.status.replace("_", " ")}</span>
-                        </div>
+                const response = await fetch(
+                    `${API_BASE}/api/book-repair`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
 
-                        <div class="grid grid-cols-4 gap-2 relative text-center">
-                            <div class="flex flex-col items-center">
-                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step1 ? 'bg-emerald-600' : 'bg-slate-200'}">1</div>
-                                <span class="text-[10px] font-bold text-slate-700 mt-1">Booked</span>
-                            </div>
-                            <div class="flex flex-col items-center">
-                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step2 ? 'bg-blue-600' : 'bg-slate-200'}">2</div>
-                                <span class="text-[10px] font-bold text-slate-700 mt-1">Accepted</span>
-                            </div>
-                            <div class="flex flex-col items-center">
-                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step3 ? 'bg-purple-600' : 'bg-slate-200'}">3</div>
-                                <span class="text-[10px] font-bold text-slate-700 mt-1">Priced</span>
-                            </div>
-                            <div class="flex flex-col items-center">
-                                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${step4 ? 'bg-emerald-600' : 'bg-slate-200'}">4</div>
-                                <span class="text-[10px] font-bold text-slate-700 mt-1">Closed</span>
-                            </div>
-                        </div>
+                const data = await response.json();
 
-                        ${job.estimatedPrice > 0 ? `
-                            <div class="text-xs bg-white border border-slate-100 p-3 rounded-lg flex justify-between items-center">
-                                <span class="font-bold text-slate-600">Service Estimation Charge:</span>
-                                <span class="text-sm font-black text-slate-900">₹${job.estimatedPrice}</span>
-                            </div>
-                        ` : ''}
-                        
-                        ${job.paymentStatus === 'Paid' ? `
-                            <div class="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold tracking-wide uppercase px-3 py-1 rounded text-center">
-                                Order Fully Settled Across Systems via [${job.paymentMode || 'N/A'}]
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-        } catch (err) {
-            console.error("Tracking render error:", err);
+                if (!response.ok) {
+                    alert(data.message || "Booking failed");
+                    return;
+                }
+
+                alert("Booking Registered Successfully ✅");
+
+                document.getElementById("bookingForm").reset();
+
+                // refill name
+                if (activeUser.user_metadata?.full_name) {
+                    document.getElementById("name").value =
+                        activeUser.user_metadata.full_name;
+                }
+
+                loadTrackingLogs();
+
+            } catch (err) {
+                console.error(err);
+                alert("Backend connection failed");
+            }
+        });
+});
+
+// ==========================================
+// LOAD TRACKING
+// ==========================================
+async function loadTrackingLogs() {
+
+    if (!activeUser) return;
+
+    try {
+
+        const res = await fetch(
+            `${API_BASE}/api/track/${activeUser.email}`
+        );
+
+        const data = await res.json();
+
+        const jobs = data.bookings || [];
+
+        const container =
+            document.getElementById("trackingContainer");
+
+        const reviewSelect =
+            document.getElementById(
+                "review-booking-id-select"
+            );
+
+        if (jobs.length === 0) {
+
+            container.innerHTML = `
+                <p class="text-xs text-slate-400 italic">
+                    No booking history found.
+                </p>
+            `;
+
+            document
+                .getElementById("review-submission-box")
+                .classList.add("hidden");
+
+            return;
         }
+
+        document
+            .getElementById("review-submission-box")
+            .classList.remove("hidden");
+
+        container.innerHTML = "";
+        reviewSelect.innerHTML = "";
+
+        jobs.forEach(job => {
+
+            const safeId = job._id || job.id;
+
+            reviewSelect.innerHTML += `
+                <option value="${safeId}">
+                    ${job.serviceType}
+                </option>
+            `;
+
+            const status = (job.status || "pending").toLowerCase();
+
+            let badgeColor = "bg-amber-500";
+
+            if (status === "accepted") {
+                badgeColor = "bg-blue-600";
+            }
+
+            if (status === "price_set") {
+                badgeColor = "bg-purple-600";
+            }
+
+            if (status === "completed") {
+                badgeColor = "bg-emerald-600";
+            }
+
+            container.innerHTML += `
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
+
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">
+                                ${job.serviceType}
+                            </h4>
+
+                            <p class="text-[10px] text-slate-400 font-mono">
+                                ${safeId}
+                            </p>
+                        </div>
+
+                        <span class="text-[10px] font-bold uppercase px-3 py-1 rounded-full text-white ${badgeColor}">
+                            ${status.replace("_", " ")}
+                        </span>
+
+                    </div>
+
+                    <div class="space-y-2 text-xs text-slate-700">
+
+                        <div>
+                            <strong>Problem:</strong>
+                            ${job.problemDescription}
+                        </div>
+
+                        <div>
+                            <strong>Address:</strong>
+                            ${job.serviceAddress}
+                        </div>
+
+                        ${
+                            job.mechanicName
+                                ? `
+                                <div>
+                                    <strong>Mechanic:</strong>
+                                    ${job.mechanicName}
+                                </div>
+                            `
+                                : ""
+                        }
+
+                        ${
+                            job.estimatedPrice
+                                ? `
+                                <div class="font-bold text-blue-700">
+                                    Estimated Price:
+                                    ₹${job.estimatedPrice}
+                                </div>
+                            `
+                                : ""
+                        }
+
+                        ${
+                            job.paymentStatus === "Paid"
+                                ? `
+                                <div class="text-emerald-700 font-bold">
+                                    Payment Completed (${job.paymentMode || "N/A"})
+                                </div>
+                            `
+                                : ""
+                        }
+
+                    </div>
+
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ==========================================
+// STAR RATING
+// ==========================================
+window.setRating = function (rating) {
+
+    selectedRating = rating;
+
+    document.querySelectorAll(".stars span").forEach((star, index) => {
+
+        if (index < rating) {
+            star.classList.remove("opacity-30");
+            star.classList.add("opacity-100");
+        } else {
+            star.classList.add("opacity-30");
+            star.classList.remove("opacity-100");
+        }
+    });
+};
+
+// ==========================================
+// SUBMIT REVIEW
+// ==========================================
+window.submitReview = async function () {
+
+    if (!activeUser) {
+        alert("Please login");
+        return;
     }
 
-    // ==========================================
-    // 6. REAL BACKEND REVIEWS PROCESSING LOGIC
-    // ==========================================
-    window.setRating = function(rating) {
-        selectedRating = rating;
-        document.querySelectorAll(".stars span").forEach((star, index) => {
-            star.classList.toggle("opacity-100", index < rating);
-            star.classList.toggle("opacity-30", index >= rating);
-        });
-    };
+    const bookingId =
+        document.getElementById(
+            "review-booking-id-select"
+        ).value;
 
-    window.submitReview = async function() {
-        const text = document.getElementById("reviewText").value.trim();
-        const bookingId = document.getElementById("review-booking-id-select").value;
-        const customerName = document.getElementById("name").value.trim() || activeUser?.user_metadata?.full_name || "Anonymous User";
-        
-        if (selectedRating === 0) {
-            alert("Please provide a star rating.");
-            return;
-        }
-        if (!text) {
-            alert("Review text is missing.");
-            return;
-        }
+    const review =
+        document.getElementById("reviewText").value.trim();
 
-        try {
-            const res = await fetch(`${API_BASE}/submit-review`, {
+    const customerName =
+        document.getElementById("name").value.trim();
+
+    if (selectedRating === 0) {
+        alert("Select star rating");
+        return;
+    }
+
+    if (!review) {
+        alert("Write review");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_BASE}/api/submit-review`,
+            {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
-                    bookingId: bookingId,
-                    customerName: customerName,
+                    bookingId,
+                    customerName,
                     userEmail: activeUser.email,
                     rating: selectedRating,
-                    review: text
+                    review
                 })
-            });
-
-            if (res.ok) {
-                alert("Review submitted to database successfully!");
-                document.getElementById("reviewText").value = "";
-                setRating(0);
-            } else {
-                const resData = await res.json();
-                alert(resData.message || "Submission error.");
             }
-        } catch (err) {
-            alert("Exception on backend server connection.");
-            console.error(err);
-        }
-    };
+        );
 
-    function initTrackingEngine() {
-        loadTrackingLogs();
-        if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(loadTrackingLogs, 5000);
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "Review failed");
+            return;
+        }
+
+        alert("Review Submitted Successfully ✅");
+
+        document.getElementById("reviewText").value = "";
+
+        setRating(0);
+
+    } catch (err) {
+        console.error(err);
+        alert("Backend error");
     }
-});
+};
 </script>
 </body>
 </html>
