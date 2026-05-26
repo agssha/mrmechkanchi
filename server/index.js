@@ -6,7 +6,7 @@ const path = require("path");
 const app = express();
 
 
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/mechanic_db";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected Successfully"))
