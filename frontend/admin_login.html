@@ -78,8 +78,8 @@
     </div>
 
     <script>
-        // ✅ Points accurately to the base API path
-        const API = "http://localhost:3000/api";
+        // 🔥 UPDATED: Base API URL
+        const API = "https://mrmechkanchi-1.onrender.com";
 
         async function loginAdmin() {
             const phone = document.getElementById("phone").value.trim();
@@ -94,7 +94,7 @@
             }
 
             try {
-                // ✅ UPDATE: Redirects matching your exact route config: /api/auth/admin-login
+                // ✅ Sends request to https://mrmechkanchi-1.onrender.com/auth/admin-login
                 const res = await fetch(`${API}/auth/admin-login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -113,7 +113,7 @@
                 localStorage.setItem("role", "admin"); // Helpful flag to check role client-side
 
                 // Relocate screen straight into your admin panel dashboard view
-                window.location.href = "./admin_dashboard.html";
+                window.location.href = "/admin_dashboard.html";
 
             } catch (err) {
                 error.innerText = "Server not reachable. Is your API running?";

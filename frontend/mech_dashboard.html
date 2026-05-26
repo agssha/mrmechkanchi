@@ -251,7 +251,6 @@
 
 <body>
 
-    <!-- SIDEBAR NAVIGATION MENU -->
     <aside class="sidebar">
         <div class="logo">
             <h2>🔧 Mr. Mech</h2>
@@ -268,10 +267,8 @@
         </nav>
     </aside>
 
-    <!-- MAIN WORKSPACE VIEWS -->
     <main class="main-content">
         
-        <!-- HEADER TOPBAR MODULE -->
         <header class="topbar">
             <div>
                 <h1 style="color: #111827;">Welcome Back 👋</h1>
@@ -283,7 +280,6 @@
             </div>
         </header>
 
-        <!-- SECTION BLOCK 1: MAIN METRIC DASHBOARD -->
         <section id="dashboardSection">
             <div class="stats">
                 <div class="card">
@@ -301,19 +297,16 @@
             </div>
         </section>
 
-        <!-- SECTION BLOCK 2: INTERACTIVE JOB MANAGEMENT STREAM -->
         <section id="myJobsSection">
             <h2 style="margin-bottom:20px; color: #1f2937;">Active Job Feed</h2>
             <div id="jobsContainer"></div>
         </section>
 
-        <!-- SECTION BLOCK 3: HISTORICAL CLOSED TRANSACTION LOGS -->
         <section id="completedSection" class="hidden">
             <h2 style="margin-bottom:20px; color: #1f2937;">Closed Job Archives</h2>
             <div id="completedContainer"></div>
         </section>
 
-        <!-- SECTION BLOCK 4: STAFF AVAILABILITY PARAMETER CONFIGURATION -->
         <section id="availabilitySection" class="hidden">
             <div class="profile-section">
                 <h2>Duty Status Monitor</h2>
@@ -322,7 +315,6 @@
             </div>
         </section>
 
-        <!-- SECTION BLOCK 5: PROFILE METADATA METRICS VIEWER -->
         <section id="profileSection" class="hidden">
             <div class="profile-section">
                 <h2>Account Attributes</h2>
@@ -335,15 +327,15 @@
     </main>
 
     <script>
-    // Central configurations wiring security components directly to server routes
-    const API_BASE = "http://localhost:3000/api";
+    // 🔥 UPDATED: Central configurations wiring security components directly to server routes
+    const API_BASE = "https://mrmechkanchi-1.onrender.com/mechanic";
     const token = localStorage.getItem("token");
     const phone = localStorage.getItem("mechanicPhone");
 
     // Secure Routing Shield Verification Guard Route
     if (!token || !phone) {
         alert("Security clearance validation missing. Returning to verification gateway.");
-        window.location.href = "./mech_login.html";
+        window.location.href = "/mech_login.html";
     }
 
     // =========================================================================
@@ -378,7 +370,7 @@
     function executeLogout() {
         if(!confirm("Are you sure you want to log out of the session?")) return;
         localStorage.clear();
-        window.location.href = "./mech_login.html";
+        window.location.href = "/mech_login.html";
     }
 
     function switchView(target) {
@@ -406,7 +398,7 @@
 
     async function acceptJob(id) {
         try {
-            const res = await fetch(`${API_BASE}/mechanic/accept-job`, { // Make sure this matches your routes! Usually it's just /accept-job
+            const res = await fetch(`${API_BASE}/accept-job`, { // Removed /mechanic since it's in API_BASE now
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -436,7 +428,7 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/mechanic/set-charge`, {
+            const res = await fetch(`${API_BASE}/set-charge`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -460,7 +452,7 @@
         if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
 
         try {
-            const res = await fetch(`${API_BASE}/mechanic/confirm-cash`, {
+            const res = await fetch(`${API_BASE}/confirm-cash`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -493,7 +485,7 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/mechanic/my-jobs/${phone}`, {
+            const res = await fetch(`${API_BASE}/my-jobs/${phone}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
