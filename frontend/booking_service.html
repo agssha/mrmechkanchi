@@ -294,7 +294,7 @@ window.signInWithGoogle = async function() {
         }
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: 'https://your-frontend.onrender.com/booking_service.html' }
+            options: { redirectTo: 'https://mrmechkanchi-2.onrender.com/booking_service.html' }
         });
         if (error) alert("Login Error: " + error.message);
     } catch (err) {
