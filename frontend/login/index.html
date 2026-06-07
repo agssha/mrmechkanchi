@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Mechanic Login - Mr. Mech Kanchi by AGS</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+<header class="fixed top-0 w-full bg-white shadow-sm z-50">
+    <div class="flex justify-between items-center px-6 h-16 max-w-7xl mx-auto">
+        <div class="font-bold text-blue-900 text-xl">Mr. Mech Kanchi <span class="font-light text-slate-500">by AGS</span></div>
+        <a href="/" class="text-gray-600 hover:text-blue-600 font-medium text-sm">Home</a>
+    </div>
+</header>
+
+<main class="flex items-center justify-center min-h-screen pt-20 px-4">
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow border border-gray-100">
+
+        <h1 class="text-2xl font-bold text-center text-gray-900 mb-1">Mechanic Login</h1>
+        <p class="text-center text-xs text-gray-500 mb-6">Access your secure staff deployment assignment feed</p>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-1">Registered Phone Number</label>
+                <input id="phone"
+                    type="tel"
+                    required
+                    placeholder="Enter your 10-digit login ID"
+                    class="w-full border border-gray-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"/>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-1">Account Password</label>
+                <div class="relative">
+                    <input id="password"
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        class="w-full border border-gray-200 p-3 rounded-xl text-sm pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"/>
+
+                    <button type="button"
+                        onclick="togglePassword()"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-sm">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <input type="checkbox" id="remember" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
+                <label for="remember" class="text-xs font-medium text-gray-600 cursor-pointer select-none">Keep me logged in on this device</label>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-xl font-semibold text-sm hover:bg-blue-700 active:scale-98 transform transition-all shadow-sm">
+                Authorize Profile Access
+            </button>
+            
+            
+        </form>
+
+    </div>
+</main>
+
+<script>
+// Base API configuration referencing your updated Render backend
+const API_BASE = "https://mrmechkanchi-1.onrender.com";
+
+/* TOGGLE PASSWORD VISIBILITY FIELD MAPPING */
+function togglePassword() {
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
+
+/* LIVE CORE FORM ATTACHMENT EXECUTION MODULE */
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const remember = document.getElementById("remember").checked;
+
+    if (!phone || !password) {
+        alert("Please provide both phone number and password variables. ❌");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/mechanic-login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ phone, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message || "Credential matching evaluation failed. ❌");
+            return;
+        }
+
+        // SECURITY PERSISTENCE UPGRADE: Store token variables inside localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", "mechanic");
+        localStorage.setItem("mechanicPhone", phone);
+        
+        // Handle local identity persistence preferences safely
+        if (remember) {
+            localStorage.setItem("savedPhone", phone);
+            localStorage.setItem("rememberMechanic", "true");
+        } else {
+            localStorage.removeItem("savedPhone");
+            localStorage.removeItem("rememberMechanic");
+        }
+
+        alert("Profile authentication success! Redirecting to workspace dashboard. ✅");
+        window.location.href = "/mechanic";
+
+    } catch (err) {
+        console.error("Connection link tracking break context:", err);
+        alert("Server not reachable. Please verify your Express application running status. ❌");
+    }
+});
+
+/* PERSISTED SESSION AUTO-FILL INTROSPECT PROCESSING BLOCK */
+window.addEventListener("load", () => {
+    const savedPhone = localStorage.getItem("savedPhone");
+    const rememberMechanic = localStorage.getItem("rememberMechanic");
+
+    if (savedPhone && rememberMechanic === "true") {
+        document.getElementById("phone").value = savedPhone;
+        document.getElementById("remember").checked = true;
+    }
+});
+</script>
+
+</body>
+</html>

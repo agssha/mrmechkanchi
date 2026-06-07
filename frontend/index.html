@@ -130,13 +130,13 @@
                     class="font-light text-slate-500">by AGS</span></div>
             <nav class="hidden md:flex items-center space-x-gutter">
                 <a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1 font-inter antialiased"
-                    href="/index.html">Home</a>
+                    href="/">Home</a>
                 <a class="text-slate-600 hover:text-blue-600 transition-colors font-inter antialiased"
                     href="#service">Services</a>
                 <a class="text-slate-600 hover:text-blue-600 transition-colors font-inter antialiased"
                     href="/booking">Book Service</a>
                 <a class="text-slate-600 hover:text-blue-600 transition-colors font-inter antialiased"
-                    href="/mech_login.html">Mechanic Login</a>
+                    href="/login">Mechanic Login</a>
             </nav>
             <div class="flex items-center gap-4">
                 <div class="relative hidden sm:block">
@@ -251,7 +251,7 @@
                         </div>
                     </a>
                     <!-- Fridge Repair -->
-                    <a href="/booking_service.html?service=fridge" data-service="Fridge Repair"
+                    <a href="/booking?service=fridge" data-service="Fridge Repair"
                         class="service-card bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all group border border-outline-variant/20 cursor-pointer">
                         <div
                             class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
@@ -269,7 +269,7 @@
                         </div>
                     </a>
                     <!-- Washing Machine Repair -->
-                    <a href="/booking_service.html?service=washing_machine" data-service="Washing Machine Repair"
+                    <a href="/booking?service=washing_machine" data-service="Washing Machine Repair"
                         class="service-card bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all group border border-outline-variant/20 cursor-pointer">
                         <div
                             class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
@@ -287,7 +287,7 @@
                         </div>
                     </a>
                     <!-- Tailoring Machine Repair -->
-                    <a href="/booking_service.html?service=tailoring_machine" data-service="Tailoring Machine Repair"
+                    <a href="/booking?service=tailoring_machine" data-service="Tailoring Machine Repair"
                         class=" service-card bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all group border border-outline-variant/20 cursor-pointer">
                         <div
                             class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
@@ -494,9 +494,9 @@
                     Premium Home Services.</p>
                 <div class="flex gap-6">
                     <a class="font-inter text-xs uppercase tracking-wider text-slate-500 hover:text-blue-600"
-                        href="/privacypolicy.html">Privacy Policy</a>
+                        href="/privacy policy">Privacy Policy</a>
                     <a class="font-inter text-xs uppercase tracking-wider text-slate-500 hover:text-blue-600"
-                        href="/termsofservice.html">Terms of Service</a>
+                        href="/terms of service">Terms of Service</a>
                     <a class="font-inter text-xs uppercase tracking-wider text-slate-500 hover:text-blue-600"
                         href="#">Contact Support</a>
                     <a class="font-inter text-xs uppercase tracking-wider text-slate-500 hover:text-blue-600"
@@ -520,7 +520,7 @@
 
     <script>
         function goToBooking() {
-            window.location.href = "booking_service.html";
+            window.location.href = "booking";
         }
 
         const searchInput = document.getElementById("searchInput");
