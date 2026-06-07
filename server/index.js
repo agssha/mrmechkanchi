@@ -1,76 +1,49 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-require("dotenv").config();
+const dns = require("dns");
 
-const app = express();
+dns.setServers([
+  "8.8.8.8",
+  "1.1.1.1",
+]);
+const app = require("./src/app");
+const config = require("./src/config/config");
+const connectDB = require("./src/config/db");
+const seedDatabase = require("./src/database/seed");
+const logger = require("./src/utils/logger");
 
-// =====================================================
-// MIDDLEWARE
-// =====================================================
-app.use(cors({ origin: "*" }));
-app.use(express.json());
-
-// =====================================================
-// ROUTES
-// =====================================================
-const masterRoutes = require("./routes/routes");
-app.use("/api", masterRoutes);
-
-// =====================================================
-// HEALTH CHECK
-// =====================================================
-app.get("/", (req, res) => {
-    res.json({
-        message: "Mechanic Service Backend API is running 🚀"
-    });
-});
-
-// =====================================================
-// MONGODB CONNECTION (SAFE VERSION)
-// =====================================================
-const MONGO_URL =
-"mongodb+srv://mrmechkanchi_db_user:Ganesh2004@cluster0.enofrz3.mongodb.net/mrmech?retryWrites=true&w=majority&appName=Cluster0";
-
-async function startServer() {
+async function bootstrap() {
     try {
-        await mongoose.connect(MONGO_URL);
+        // 1. Establish Secure MongoDB Connection
+        await connectDB();
 
-        console.log("✅ MongoDB Connected Successfully");
+        // 2. Perform Database Seeding (Admin & Mechanics profiles setup)
+        await seedDatabase();
 
-        const PORT = process.env.PORT || 3000;
-
-        app.listen(PORT, () => {
-            console.log("==================================================");
-            console.log("🚀 Server Started Successfully");
-            console.log(`📡 http://localhost:${PORT}`);
-            console.log("==================================================");
+        // 3. Start Port Listener
+        const PORT = config.port;
+        const server = app.listen(PORT, () => {
+            logger.info("==================================================");
+            logger.info("🚀 Startup-Grade Server Started Successfully");
+            logger.info(`📡 Local Feed: http://localhost:${PORT}`);
+            logger.info(`⚙️  Environment Profile: ${config.env}`);
+            logger.info("==================================================");
         });
 
+        // Handle process terminations cleanly
+        const shutdown = () => {
+            logger.warn("Received termination signal. Shutting down server gracefully...");
+            server.close(() => {
+                logger.info("Express server closed.");
+                process.exit(0);
+            });
+        };
+
+        process.on("SIGTERM", shutdown);
+        process.on("SIGINT", shutdown);
+
     } catch (err) {
-        console.error("❌ MongoDB Connection Error:", err);
+        logger.error(`❌ Bootstrap Critical Exception: ${err.message}`);
         process.exit(1);
     }
 }
 
-startServer();
-
-// =====================================================
-// 404 HANDLER
-// =====================================================
-app.use((req, res) => {
-    res.status(404).json({
-        message: "Requested endpoint path not found."
-    });
-});
-
-// =====================================================
-// ERROR HANDLER
-// =====================================================
-app.use((err, req, res, next) => {
-    console.error("Fatal Error:", err);
-
-    res.status(500).json({
-        message: "Internal server error"
-    });
-});
+bootstrap();
