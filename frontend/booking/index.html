@@ -495,37 +495,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 const data = await response.json();
 
-                let isSubmitting = false;
+                if (!response.ok) {
+                    alert(data.message || "Booking failed");
+                    return;
+                }
 
-document.getElementById("bookingForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+                alert("Booking Registered Successfully ✅");
 
-    if (isSubmitting) return;
-
-    isSubmitting = true;
-
-    const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Booking...";
-
-    try {
-        const response = await fetch(/* your API */);
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || "Booking failed");
-        }
-
-        alert("Booking Registered Successfully ✅");
-        this.reset();
-
-    } catch (error) {
-        alert(error.message);
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Book Now";
-        isSubmitting = false;
-    }
-});
+                document.getElementById("bookingForm").reset();
 
                 if (activeUser.user_metadata?.full_name) {
                     document.getElementById("name").value =
