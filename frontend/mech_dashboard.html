@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mechanic Dashboard - Mr. Mech Kanchi</title>
+    <title>Mechanic Dashboard | Mr. Mech Kanchi</title>
+    <meta name="robots" content="noindex, nofollow" />
 
     <style>
         * {
@@ -246,6 +247,91 @@
         }
 
         .hidden { display: none !important; }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 15px;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .menu button {
+                font-size: 13px;
+                padding: 8px 12px;
+                width: auto;
+                flex: 1 1 auto;
+                text-align: center;
+            }
+
+            .menu button[onclick="executeLogout()"] {
+                margin-top: 0 !important;
+                background: #fee2e2;
+                color: #ef4444;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .profile-box {
+                text-align: left;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .card {
+                width: 100%;
+            }
+
+            .job-card h3 {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .job-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .price-input {
+                width: 100%;
+            }
+
+            .job-actions button {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 
