@@ -459,6 +459,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     // BOOKING FORM
     // ==========================================
+let submit = false;
+
+document.getElementById("bookingForm").addEventListener("submit", function (e) {
+if (submitted) {
+    e.preventDefault();
+    return false;
+}
+submitted = true;
+const btn = document.getElementById("submitBtn");
+btn.disabled = true;
+btn.innerText = "Submitting...";
+});
     document
         .getElementById("bookingForm")
         .addEventListener("submit", async function (e) {
