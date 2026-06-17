@@ -459,18 +459,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     // BOOKING FORM
     // ==========================================
-let submit = false;
-
-document.getElementById("bookingForm").addEventListener("submit", function (e) {
-if (submitted) {
-    e.preventDefault();
-    return false;
-}
-submitted = true;
-const btn = document.getElementById("submitBtn");
-btn.disabled = true;
-btn.innerText = "Submitting...";
-});
     document
         .getElementById("bookingForm")
         .addEventListener("submit", async function (e) {
@@ -507,14 +495,37 @@ btn.innerText = "Submitting...";
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    alert(data.message || "Booking failed");
-                    return;
-                }
+                let isSubmitting = false;
 
-                alert("Booking Registered Successfully ✅");
+document.getElementById("bookingForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-                document.getElementById("bookingForm").reset();
+    if (isSubmitting) return;
+
+    isSubmitting = true;
+
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Booking...";
+
+    try {
+        const response = await fetch(/* your API */);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Booking failed");
+        }
+
+        alert("Booking Registered Successfully ✅");
+        this.reset();
+
+    } catch (error) {
+        alert(error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Book Now";
+        isSubmitting = false;
+    }
+});
 
                 if (activeUser.user_metadata?.full_name) {
                     document.getElementById("name").value =
