@@ -5,7 +5,8 @@ const {
     helmetMiddleware,
     generalLimiter,
     authLimiter,
-    sanitizeMiddleware
+    sanitizeMiddleware,
+    duplicatePreventer
 } = require("./middlewares/securityMiddleware");
 const masterRoutes = require("./routes");
 const errorHandler = require("./middlewares/errorMiddleware");
@@ -25,6 +26,7 @@ app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sanitizeMiddleware); // Protect against NoSQL injection
+app.use("/api", duplicatePreventer(3000)); // Protect all API endpoints from rapid duplicates
 
 // =====================================================
 // SERVE FRONTEND STATIC FILES

@@ -1,4 +1,5 @@
 const { Review } = require("../models");
+const AppError = require("../utils/appError");
 
 class ReviewService {
     /**
@@ -6,6 +7,12 @@ class ReviewService {
      */
     async addReview(data) {
         const { bookingId, customerName, userEmail, mechanicName, rating, review } = data;
+
+        // Prevent duplicate database entries for review
+        const duplicate = await Review.findOne({ bookingId });
+        if (duplicate) {
+            throw new AppError("A review for this service booking has already been submitted.", 400);
+        }
 
         const newReview = await Review.create({
             bookingId,

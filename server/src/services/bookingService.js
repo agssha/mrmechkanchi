@@ -9,6 +9,19 @@ class BookingService {
     async createBooking(data) {
         const { name, mobileNumber, userEmail, userId, serviceAddress, serviceType, problemDescription } = data;
         
+        // Prevent duplicate database entries within a short time window (e.g. 10 seconds)
+        const tenSecondsAgo = new Date(Date.now() - 10000);
+        const duplicate = await Booking.findOne({
+            mobileNumber,
+            serviceType,
+            serviceAddress,
+            createdAt: { $gte: tenSecondsAgo }
+        });
+
+        if (duplicate) {
+            throw new AppError("A matching booking was already submitted successfully. Please check your active bookings.", 400);
+        }
+
         const newBooking = await Booking.create({
             name,
             mobileNumber,

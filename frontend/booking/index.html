@@ -175,7 +175,7 @@
         </div>
         
         <div class="space-y-4 pt-2">
-            <button onclick="signInWithGoogle()" class="w-full bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-3 shadow-sm">
+            <button onclick="signInWithGoogle(this)" class="w-full bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-3 shadow-sm">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -318,7 +318,7 @@
 
                 <textarea id="reviewText" placeholder="Please leave advice context or review insights here..." class="w-full text-sm border-slate-200 rounded-xl h-24 resize-none focus:ring-blue-500"></textarea>
                 
-                <button onclick="submitReview()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition shadow-sm">
+                <button onclick="submitReview(this)" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition shadow-sm">
                     File Audit Review
                 </button>
             </div>
@@ -328,6 +328,46 @@
 </main>
 
 <script>
+// Dynamic CSS spinner injection and setButtonLoading helper function
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes button-spin {
+      to { transform: rotate(360deg); }
+    }
+    .button-spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: button-spin 0.75s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: text-bottom;
+    }
+    `;
+    document.head.appendChild(style);
+
+    window.setButtonLoading = function(btn, isLoading, loadingText) {
+        if (!btn) return;
+        if (isLoading) {
+            btn.disabled = true;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = `<span class="button-spinner"></span>` + (loadingText || 'Please Wait...');
+        } else {
+            btn.disabled = false;
+            btn.style.pointerEvents = '';
+            btn.style.opacity = '';
+            if (btn.dataset.originalHtml !== undefined) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        }
+    };
+})();
+
 // ==========================================
 // SUPABASE CONFIG
 // ==========================================
@@ -351,7 +391,8 @@ let pollingInterval = null;
 // ==========================================
 // GOOGLE LOGIN
 // ==========================================
-window.signInWithGoogle = async function () {
+window.signInWithGoogle = async function (btn) {
+    if (btn) setButtonLoading(btn, true, "Signing In... Please Wait");
     try {
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: "google",
@@ -363,10 +404,12 @@ window.signInWithGoogle = async function () {
 
         if (error) {
             alert(error.message);
+            if (btn) setButtonLoading(btn, false);
         }
     } catch (err) {
         console.error(err);
         alert("Google Login Failed");
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
@@ -470,6 +513,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
+            const submitBtn = e.target.querySelector("button[type='submit']");
+            setButtonLoading(submitBtn, true, "Booking... Please Wait");
+
             const payload = {
                 name: document.getElementById("name").value.trim(),
                 mobileNumber: document.getElementById("phone").value.trim(),
@@ -497,6 +543,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 if (!response.ok) {
                     alert(data.message || "Booking failed");
+                    setButtonLoading(submitBtn, false);
                     return;
                 }
 
@@ -510,17 +557,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
 
                 loadTrackingLogs();
+                setButtonLoading(submitBtn, false);
 
             } catch (err) {
                 console.error(err);
                 alert("Backend connection failed");
-            }finally {
-        // 5. Unlock the button so they can try again if they need to
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalText;
-        submitBtn.style.opacity = "1";
-        submitBtn.style.cursor = "pointer";
-    }
+                setButtonLoading(submitBtn, false);
+            }
         });
 });
 
@@ -657,7 +700,7 @@ window.setRating = function (rating) {
 // ==========================================
 // SUBMIT REVIEW
 // ==========================================
-window.submitReview = async function () {
+window.submitReview = async function (btn) {
 
     if (!activeUser) {
         alert("Please login");
@@ -683,6 +726,8 @@ window.submitReview = async function () {
         return;
     }
 
+    setButtonLoading(btn, true, "Submitting... Please Wait");
+
     try {
 
         const response = await fetch(
@@ -706,6 +751,7 @@ window.submitReview = async function () {
 
         if (!response.ok) {
             alert(data.message || "Review failed");
+            setButtonLoading(btn, false);
             return;
         }
 
@@ -713,10 +759,12 @@ window.submitReview = async function () {
 
         document.getElementById("reviewText").value = "";
         setRating(0);
+        setButtonLoading(btn, false);
 
     } catch (err) {
         console.error(err);
         alert("Backend error");
+        setButtonLoading(btn, false);
     }
 };
 

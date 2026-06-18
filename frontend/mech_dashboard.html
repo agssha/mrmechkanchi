@@ -413,6 +413,46 @@
     </main>
 
     <script>
+    // Dynamic CSS spinner injection and setButtonLoading helper function
+    (function() {
+        const style = document.createElement('style');
+        style.textContent = `
+        @keyframes button-spin {
+          to { transform: rotate(360deg); }
+        }
+        .button-spinner {
+          display: inline-block;
+          width: 1rem;
+          height: 1rem;
+          border: 2px solid currentColor;
+          border-right-color: transparent;
+          border-radius: 50%;
+          animation: button-spin 0.75s linear infinite;
+          margin-right: 0.5rem;
+          vertical-align: text-bottom;
+        }
+        `;
+        document.head.appendChild(style);
+
+        window.setButtonLoading = function(btn, isLoading, loadingText) {
+            if (!btn) return;
+            if (isLoading) {
+                btn.disabled = true;
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.7';
+                btn.dataset.originalHtml = btn.innerHTML;
+                btn.innerHTML = `<span class="button-spinner"></span>` + (loadingText || 'Please Wait...');
+            } else {
+                btn.disabled = false;
+                btn.style.pointerEvents = '';
+                btn.style.opacity = '';
+                if (btn.dataset.originalHtml !== undefined) {
+                    btn.innerHTML = btn.dataset.originalHtml;
+                }
+            }
+        };
+    })();
+
     // 🔥 UPDATED: Central configurations wiring security components directly to server routes
     const API_BASE = "https://mrmechkanchi-1.onrender.com/api/mechanic";
     const token = localStorage.getItem("token");
@@ -482,7 +522,8 @@
     // CORE PIPELINE ACTION CONTROLLERS
     // =========================================================================
 
-    async function acceptJob(id) {
+    async function acceptJob(id, btn) {
+        if (btn) setButtonLoading(btn, true, "Accepting...");
         try {
             const res = await fetch(`${API_BASE}/accept-job`, { // Removed /mechanic since it's in API_BASE now
                 method: "PUT",
@@ -500,18 +541,22 @@
             } else {
                 const data = await res.json();
                 alert(data.message || "Accept job request mutation refused.");
+                if (btn) setButtonLoading(btn, false);
             }
         } catch (err) {
             console.error("Pipeline write failure:", err);
+            if (btn) setButtonLoading(btn, false);
         }
     }
 
-    async function setPrice(id) {
+    async function setPrice(id, btn) {
         const pricingInput = document.getElementById(`price-${id}`).value;
         if (!pricingInput || Number(pricingInput) <= 0) {
             alert("Please enter a valid currency estimation amount value.");
             return;
         }
+
+        if (btn) setButtonLoading(btn, true, "Submitting...");
 
         try {
             const res = await fetch(`${API_BASE}/set-charge`, {
@@ -528,14 +573,18 @@
             } else {
                 const data = await res.json();
                 alert(data.message || "Pricing submission context rejected.");
+                if (btn) setButtonLoading(btn, false);
             }
         } catch (err) {
             console.error("Pricing transaction commit crash:", err);
+            if (btn) setButtonLoading(btn, false);
         }
     }
 
-    async function recordCashPayment(id) {
+    async function recordCashPayment(id, btn) {
         if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
+
+        if (btn) setButtonLoading(btn, true, "Completing...");
 
         try {
             const res = await fetch(`${API_BASE}/confirm-cash`, {
@@ -553,9 +602,11 @@
             } else {
                 const data = await res.json();
                 alert(data.message || "Payment status processing mutation failure.");
+                if (btn) setButtonLoading(btn, false);
             }
         } catch (err) {
             console.error("Payment registration route trace drop:", err);
+            if (btn) setButtonLoading(btn, false);
         }
     }
 
@@ -628,15 +679,15 @@
                         ${paymentContextHTML}
 
                         <div class="job-actions">
-                            ${statusStr === 'assigned' ? `<button class="accept-btn" onclick="acceptJob('${safeId}')">Accept Order</button>` : ""}
+                            ${statusStr === 'assigned' ? `<button class="accept-btn" onclick="acceptJob('${safeId}', this)">Accept Order</button>` : ""}
                             
                             ${statusStr === 'accepted' ? `
                                 <input type="number" id="price-${safeId}" class="price-input" placeholder="Set ₹ Amount">
-                                <button class="price-btn" onclick="setPrice('${safeId}')">Submit</button>
+                                <button class="price-btn" onclick="setPrice('${safeId}', this)">Submit</button>
                             ` : ""}
                             
                             ${(statusStr === 'price_set' && b.paymentStatus !== 'Paid') ? `
-                                <button class="complete-btn" onclick="recordCashPayment('${safeId}')">Confirm Cash & Complete</button>
+                                <button class="complete-btn" onclick="recordCashPayment('${safeId}', this)">Confirm Cash & Complete</button>
                             ` : ""}
                         </div>
                     </div>

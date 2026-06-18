@@ -53,10 +53,85 @@ const sanitizeMiddleware = (req, res, next) => {
     next();
 };
 
+// Map to track active/recent request signatures
+const requestLocks = new Map();
+
+// Periodic cleanup loop to prevent memory accumulation
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, lock] of requestLocks.entries()) {
+        if (lock.status === "cooling" && now - lock.timestamp > 3000) {
+            requestLocks.delete(key);
+        } else if (lock.status === "in-flight" && now - lock.timestamp > 30000) {
+            requestLocks.delete(key); // Auto-expire hung requests after 30s
+        }
+    }
+}, 5000);
+
+const duplicatePreventer = (windowMs = 3000) => {
+    return (req, res, next) => {
+        if (req.method === "GET" || req.method === "OPTIONS") {
+            return next();
+        }
+
+        const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+        const path = req.originalUrl || req.url;
+        let bodyStr = "";
+        if (req.body && Object.keys(req.body).length > 0) {
+            bodyStr = JSON.stringify(req.body);
+        }
+        const signature = `${ip}:${path}:${bodyStr}`;
+        const now = Date.now();
+
+        if (requestLocks.has(signature)) {
+            const lock = requestLocks.get(signature);
+            if (lock.status === "in-flight") {
+                return res.status(409).json({
+                    success: false,
+                    message: "A duplicate request is already in progress. Please wait."
+                });
+            } else if (lock.status === "cooling" && now - lock.timestamp < windowMs) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Duplicate submission detected. Please wait a moment."
+                });
+            }
+        }
+
+        // Lock signature as in-flight
+        requestLocks.set(signature, {
+            status: "in-flight",
+            timestamp: now
+        });
+
+        const releaseLock = () => {
+            if (requestLocks.has(signature)) {
+                const current = requestLocks.get(signature);
+                if (current && current.status === "in-flight") {
+                    requestLocks.set(signature, {
+                        status: "cooling",
+                        timestamp: Date.now()
+                    });
+                    
+                    setTimeout(() => {
+                        requestLocks.delete(signature);
+                    }, windowMs);
+                }
+            }
+        };
+
+        res.on("finish", releaseLock);
+        res.on("close", releaseLock);
+
+        next();
+    };
+};
+
 module.exports = {
     corsMiddleware,
     helmetMiddleware,
     generalLimiter,
     authLimiter,
-    sanitizeMiddleware
+    sanitizeMiddleware,
+    duplicatePreventer
 };

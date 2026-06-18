@@ -77,6 +77,46 @@
 </main>
 
 <script>
+// Dynamic CSS spinner injection and setButtonLoading helper function
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes button-spin {
+      to { transform: rotate(360deg); }
+    }
+    .button-spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: button-spin 0.75s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: text-bottom;
+    }
+    `;
+    document.head.appendChild(style);
+
+    window.setButtonLoading = function(btn, isLoading, loadingText) {
+        if (!btn) return;
+        if (isLoading) {
+            btn.disabled = true;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = `<span class="button-spinner"></span>` + (loadingText || 'Please Wait...');
+        } else {
+            btn.disabled = false;
+            btn.style.pointerEvents = '';
+            btn.style.opacity = '';
+            if (btn.dataset.originalHtml !== undefined) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        }
+    };
+})();
+
 // Base API configuration referencing your updated Render backend
 const API_BASE = "https://mrmechkanchi-1.onrender.com";
 
@@ -99,6 +139,9 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         return;
     }
 
+    const submitBtn = e.target.querySelector("button[type='submit']");
+    setButtonLoading(submitBtn, true, "Logging In... Please Wait");
+
     try {
         const res = await fetch(`${API_BASE}/api/auth/mechanic-login`, {
             method: "POST",
@@ -112,6 +155,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
         if (!res.ok) {
             alert(data.message || "Credential matching evaluation failed. ❌");
+            setButtonLoading(submitBtn, false);
             return;
         }
 
@@ -135,6 +179,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     } catch (err) {
         console.error("Connection link tracking break context:", err);
         alert("Server not reachable. Please verify your Express application running status. ❌");
+        setButtonLoading(submitBtn, false);
     }
 });
 
