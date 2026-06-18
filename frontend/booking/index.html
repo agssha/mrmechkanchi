@@ -514,7 +514,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (err) {
                 console.error(err);
                 alert("Backend connection failed");
-            }
+            }finally {
+        // 5. Unlock the button so they can try again if they need to
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+        submitBtn.style.opacity = "1";
+        submitBtn.style.cursor = "pointer";
+    }
         });
 });
 
