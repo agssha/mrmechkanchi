@@ -14,6 +14,9 @@ const ApiResponse = require("./utils/apiResponse");
 
 const app = express();
 
+// Trust proxy to allow express-rate-limit to read X-Forwarded-For headers behind Render/Nginx
+app.set("trust proxy", 1);
+
 // =====================================================
 // SECURITY MIDDLEWARES & HEADERS
 // =====================================================
