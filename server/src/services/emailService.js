@@ -15,9 +15,11 @@ class EmailService {
                     port: parseInt(port, 10) || 587,
                     secure: port === "465",
                     auth: { user, pass },
-                    connectionTimeout: 10000, // 10 seconds fail-fast
-                    greetingTimeout: 10000,
-                    socketTimeout: 10000
+                    connectionTimeout: 20000, // 10 seconds fail-fast
+                    greetingTimeout: 20000,
+                    socketTimeout: 20000,
+                    debug: true,
+                    logger: true
                 });
             } else {
                 this.transporter = nodemailer.createTransport({
