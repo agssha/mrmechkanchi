@@ -14,12 +14,18 @@ class EmailService {
                     host: host,
                     port: parseInt(port, 10) || 587,
                     secure: port === "465",
-                    auth: { user, pass }
+                    auth: { user, pass },
+                    connectionTimeout: 10000, // 10 seconds fail-fast
+                    greetingTimeout: 10000,
+                    socketTimeout: 10000
                 });
             } else {
                 this.transporter = nodemailer.createTransport({
                     service: "gmail",
-                    auth: { user, pass }
+                    auth: { user, pass },
+                    connectionTimeout: 10000,
+                    greetingTimeout: 10000,
+                    socketTimeout: 10000
                 });
             }
         } else {
