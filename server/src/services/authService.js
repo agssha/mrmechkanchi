@@ -35,7 +35,7 @@ class AuthService {
         }
 
         const token = jwt.sign(
-            { phone, role: "admin", name: admin.name },
+            { phone, role: admin.role || "admin", name: admin.name },
             config.jwt.secret,
             { expiresIn: "1d" }
         );

@@ -1,4 +1,4 @@
-const { Booking } = require("../models");
+const { Booking, ActivityLog } = require("../models");
 const STATUS = require("../constants/status");
 const AppError = require("../utils/appError");
 
@@ -173,6 +173,92 @@ class BookingService {
         }
 
         return booking;
+    }
+
+    /**
+     * Edit booking details
+     */
+    async editBooking(bookingId, data, adminUser) {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            throw new AppError("Booking not found", 404);
+        }
+
+        const oldData = booking.toObject();
+
+        // Update fields: status, date (createdAt), mechanic assignment, customer details, vehicle details, and service details.
+        if (data.name !== undefined) booking.name = data.name;
+        if (data.mobileNumber !== undefined) booking.mobileNumber = data.mobileNumber;
+        if (data.userEmail !== undefined) booking.userEmail = data.userEmail;
+        if (data.serviceAddress !== undefined) booking.serviceAddress = data.serviceAddress;
+        if (data.serviceType !== undefined) booking.serviceType = data.serviceType;
+        if (data.problemDescription !== undefined) booking.problemDescription = data.problemDescription;
+        if (data.status !== undefined) booking.status = data.status;
+        if (data.estimatedPrice !== undefined) booking.estimatedPrice = Number(data.estimatedPrice);
+        if (data.vehicleName !== undefined) booking.vehicleName = data.vehicleName;
+        if (data.vehicleNumber !== undefined) booking.vehicleNumber = data.vehicleNumber;
+        if (data.createdAt !== undefined) booking.createdAt = new Date(data.createdAt);
+
+        // Update mechanic assignment
+        if (data.assignedMechanicId !== undefined) {
+            booking.assignedMechanicId = data.assignedMechanicId;
+        }
+        if (data.mechanicName !== undefined) {
+            booking.mechanicName = data.mechanicName;
+        }
+
+        // Store updated timestamp and admin who modified the booking
+        booking.updatedAt = new Date();
+        booking.modifiedByAdminId = adminUser.phone; // phone is unique login ID
+        booking.modifiedByAdminName = adminUser.name;
+
+        await booking.save();
+
+        const newData = booking.toObject();
+
+        // Create Activity Log
+        await ActivityLog.create({
+            adminId: adminUser.phone,
+            adminName: adminUser.name,
+            bookingId: booking._id.toString(),
+            actionType: "Edit",
+            oldData,
+            newData
+        });
+
+        return booking;
+    }
+
+    /**
+     * Delete booking details
+     */
+    async deleteBooking(bookingId, adminUser) {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            throw new AppError("Booking not found", 404);
+        }
+
+        const oldData = booking.toObject();
+
+        await Booking.findByIdAndDelete(bookingId);
+
+        // Create Activity Log
+        await ActivityLog.create({
+            adminId: adminUser.phone,
+            adminName: adminUser.name,
+            bookingId: bookingId,
+            actionType: "Delete",
+            oldData,
+            newData: null
+        });
+
+        // Send audit email to admin
+        const emailService = require("./emailService");
+        emailService.sendDeletedBookingEmail(oldData).catch(err => {
+            console.error(`❌ Error in async delete email triggering: ${err.message}`);
+        });
+
+        return { message: "Booking removed and deletion logged successfully" };
     }
 }
 

@@ -78,6 +78,30 @@ const bookingSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
         index: true // Index sort orders
+    },
+    vehicleName: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    vehicleNumber: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    updatedAt: {
+        type: Date,
+        default: null
+    },
+    modifiedByAdminId: {
+        type: String,
+        default: null,
+        trim: true
+    },
+    modifiedByAdminName: {
+        type: String,
+        default: null,
+        trim: true
     }
 });
 

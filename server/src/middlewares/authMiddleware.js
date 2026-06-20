@@ -13,8 +13,11 @@ const auth = (role) => (req, res, next) => {
         const decoded = jwt.verify(token, config.jwt.secret);
         req.user = decoded;
 
-        if (role && decoded.role !== role) {
-            return res.status(403).json({ message: "Forbidden: Unauthorized role profile." });
+        if (role) {
+            const rolesArray = Array.isArray(role) ? role : [role];
+            if (!rolesArray.includes(decoded.role)) {
+                return res.status(403).json({ message: "Forbidden: Unauthorized role profile." });
+            }
         }
 
         next();

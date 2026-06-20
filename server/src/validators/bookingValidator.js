@@ -64,6 +64,70 @@ class BookingValidator {
         }
         next();
     }
+
+    static validateEdit(req, res, next) {
+        const { bookingId } = req.params;
+        if (!bookingId) {
+            return next(new AppError("Booking ID is required", 400));
+        }
+
+        const { name, mobileNumber, serviceAddress, serviceType, status, estimatedPrice, userEmail, createdAt } = req.body;
+
+        if (!name || !name.trim()) {
+            return next(new AppError("Customer name is required", 400));
+        }
+        if (!mobileNumber || !mobileNumber.trim()) {
+            return next(new AppError("Mobile number is required", 400));
+        }
+        if (!serviceAddress || !serviceAddress.trim()) {
+            return next(new AppError("Service address is required", 400));
+        }
+        if (!serviceType || !serviceType.trim()) {
+            return next(new AppError("Service type is required", 400));
+        }
+        if (!status || !status.trim()) {
+            return next(new AppError("Booking status is required", 400));
+        }
+
+        const STATUS = require("../constants/status");
+        const validStatuses = Object.values(STATUS);
+        if (!validStatuses.includes(status)) {
+            return next(new AppError(`Invalid status value. Allowed: ${validStatuses.join(", ")}`, 400));
+        }
+
+        if (userEmail && userEmail.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(userEmail)) {
+                return next(new AppError("Invalid email address format", 400));
+            }
+        }
+
+        if (estimatedPrice !== undefined) {
+            const numPrice = Number(estimatedPrice);
+            if (isNaN(numPrice) || numPrice < 0) {
+                return next(new AppError("Estimated price must be a non-negative number", 400));
+            }
+        }
+
+        if (createdAt && isNaN(Date.parse(createdAt))) {
+            return next(new AppError("Invalid date format", 400));
+        }
+
+        next();
+    }
+
+    static validateDelete(req, res, next) {
+        const { bookingId } = req.params;
+        if (!bookingId) {
+            return next(new AppError("Booking ID is required", 400));
+        }
+        
+        const { confirm } = req.body;
+        if (confirm !== true) {
+            return next(new AppError("Deletion confirmation is required", 400));
+        }
+        next();
+    }
 }
 
 module.exports = BookingValidator;

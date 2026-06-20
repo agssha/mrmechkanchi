@@ -119,6 +119,37 @@ class BookingController {
             next(error);
         }
     }
+
+    /**
+     * Edit booking details (Admin/Super Admin secured)
+     */
+    async editBooking(req, res, next) {
+        try {
+            const { bookingId } = req.params;
+            const updateData = req.body;
+            const adminUser = req.user;
+
+            const booking = await bookingService.editBooking(bookingId, updateData, adminUser);
+            return ApiResponse.success(res, "Booking details updated successfully", { booking }, 200);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Delete booking (Admin/Super Admin secured)
+     */
+    async deleteBooking(req, res, next) {
+        try {
+            const { bookingId } = req.params;
+            const adminUser = req.user;
+
+            const result = await bookingService.deleteBooking(bookingId, adminUser);
+            return ApiResponse.success(res, result.message, {}, 200);
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new BookingController();
