@@ -39,10 +39,11 @@ class EmailService {
                 if (!net.isIP(host)) {
                     try {
                         const dns = require("dns").promises;
-                        // Force resolution to IPv4 addresses to bypass Render's lack of outbound IPv6 routing
-                        const addresses = await dns.resolve4(host);
-                        if (addresses && addresses.length > 0) {
-                            resolvedHost = addresses[0];
+                        // Force resolution to IPv4 address using dns.lookup to bypass Render's lack of outbound IPv6 routing.
+                        // dns.lookup is preferred over dns.resolve4 as it respects OS-level hosts/resolver settings.
+                        const lookup = await dns.lookup(host, { family: 4 });
+                        if (lookup && lookup.address) {
+                            resolvedHost = lookup.address;
                             tlsOptions = { servername: host }; // Necessary for SNI and TLS certificate verification
                             logger.info(`🌐 DNS Resolution: Resolved SMTP host ${host} to IPv4 address ${resolvedHost}`);
                         }
