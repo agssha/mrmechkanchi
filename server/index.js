@@ -5,6 +5,11 @@ dns.setServers([
   "1.1.1.1",
 ]);
 
+
+app.get("/test", (req, res) => {
+    res.send("route working");
+});
+
 if (typeof dns.setDefaultResultOrder === "function") {
   dns.setDefaultResultOrder("ipv4first");
 }
