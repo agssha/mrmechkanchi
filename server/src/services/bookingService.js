@@ -121,6 +121,7 @@ class BookingService {
         booking.paymentMode = "Cash";
         booking.paymentStatus = "Paid";
         booking.status = STATUS.COMPLETED;
+        booking.updatedAt = new Date();
 
         await booking.save();
         return booking;
@@ -139,6 +140,7 @@ class BookingService {
         booking.paymentStatus = "Paid";
         booking.razorpayOrderId = razorpayOrderId;
         booking.status = STATUS.COMPLETED;
+        booking.updatedAt = new Date();
 
         await booking.save();
         return booking;

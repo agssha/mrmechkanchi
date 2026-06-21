@@ -3,25 +3,72 @@ const logger = require("../utils/logger");
 
 class EmailService {
     constructor() {
-        const host = process.env.SMTP_HOST;
-        const port = process.env.SMTP_PORT;
-        const user = process.env.SMTP_USER;
-        const pass = process.env.SMTP_PASS;
+        this.transporter = null;
+        this.initPromise = null;
+    }
 
-        if (user && pass) {
+    /**
+     * Lazily resolve SMTP host to IPv4 and create Nodemailer transporter.
+     * Recreates transporter if previous sending attempts failed.
+     */
+    async getTransporter() {
+        if (this.transporter) {
+            return this.transporter;
+        }
+        if (this.initPromise) {
+            return this.initPromise;
+        }
+
+        this.initPromise = (async () => {
+            const host = process.env.SMTP_HOST;
+            const port = process.env.SMTP_PORT;
+            const user = process.env.SMTP_USER;
+            const pass = process.env.SMTP_PASS;
+
+            if (!user || !pass) {
+                logger.warn("⚠️ SMTP credentials not fully configured in .env. Deleted booking audits will be logged instead of emailed.");
+                return null;
+            }
+
             if (host) {
+                let resolvedHost = host;
+                let tlsOptions = {};
+
+                const net = require("net");
+                // Skip DNS resolution if host is already an IP address
+                if (!net.isIP(host)) {
+                    try {
+                        const dns = require("dns").promises;
+                        // Force resolution to IPv4 addresses to bypass Render's lack of outbound IPv6 routing
+                        const addresses = await dns.resolve4(host);
+                        if (addresses && addresses.length > 0) {
+                            resolvedHost = addresses[0];
+                            tlsOptions = { servername: host }; // Necessary for SNI and TLS certificate verification
+                            logger.info(`🌐 DNS Resolution: Resolved SMTP host ${host} to IPv4 address ${resolvedHost}`);
+                        }
+                    } catch (dnsErr) {
+                        logger.error(`⚠️ DNS Resolution failure for ${host}: ${dnsErr.message}. Falling back to hostname.`);
+                    }
+                }
+
+                logger.info(`⚙️ Configuring Nodemailer transporter with Host: ${resolvedHost}, Port: ${port}, Secure: ${port === "465"}`);
                 this.transporter = nodemailer.createTransport({
-                    host: host,
+                    host: resolvedHost,
                     port: parseInt(port, 10) || 587,
                     secure: port === "465",
                     auth: { user, pass },
-                    connectionTimeout: 20000, // 10 seconds fail-fast
+                    connectionTimeout: 20000, // 20 seconds fail-fast
                     greetingTimeout: 20000,
                     socketTimeout: 20000,
                     debug: true,
-                    logger: true
+                    logger: true,
+                    tls: {
+                        rejectUnauthorized: true,
+                        ...tlsOptions
+                    }
                 });
             } else {
+                logger.info("⚙️ Configuring Nodemailer transporter with Gmail service preset.");
                 this.transporter = nodemailer.createTransport({
                     service: "gmail",
                     auth: { user, pass },
@@ -30,10 +77,11 @@ class EmailService {
                     socketTimeout: 10000
                 });
             }
-        } else {
-            logger.warn("⚠️ SMTP credentials not fully configured in .env. Deleted booking audits will be logged instead of emailed.");
-            this.transporter = null;
-        }
+
+            return this.transporter;
+        })();
+
+        return this.initPromise;
     }
 
     async sendDeletedBookingEmail(bookingData) {
@@ -107,12 +155,18 @@ class EmailService {
             html: html
         };
 
-        if (this.transporter) {
+        const transporter = await this.getTransporter();
+
+        if (transporter) {
             try {
-                await this.transporter.sendMail(mailOptions);
+                await transporter.sendMail(mailOptions);
                 logger.info(`📧 Deleted booking audit email sent to ${recipient}`);
             } catch (error) {
-                logger.error(`❌ Failed to send deletion email: ${error.message}`);
+                logger.error(`❌ Failed to send deletion email to ${recipient}. Error: ${error.message}`, { error });
+                // Reset cached transporter and initPromise so next call performs fresh DNS resolution
+                this.transporter = null;
+                this.initPromise = null;
+                throw error;
             }
         } else {
             logger.info(`📢 [Email Simulation] Deletion audit payload for ${recipient}:\n` + JSON.stringify(bookingData, null, 2));
