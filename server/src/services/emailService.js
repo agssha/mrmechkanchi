@@ -56,7 +56,7 @@ class EmailService {
                 this.transporter = nodemailer.createTransport({
                     host: resolvedHost,
                     port: parseInt(port, 10) || 587,
-                    secure: port === "465",
+                    secure: Number(port) === 465,
                     auth: { user, pass },
                     connectionTimeout: 20000, // 20 seconds fail-fast
                     greetingTimeout: 20000,
