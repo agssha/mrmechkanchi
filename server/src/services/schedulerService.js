@@ -1,10 +1,12 @@
 const Booking = require("../models/Booking");
+const TemporaryPermission = require("../models/TemporaryPermission");
 const bookingService = require("./bookingService");
 const logger = require("../utils/logger");
 
 class SchedulerService {
     constructor() {
         this.cleanupIntervalId = null;
+        this.tempPermissionIntervalId = null;
     }
 
     /**
@@ -15,12 +17,19 @@ class SchedulerService {
         
         // Run cleanup job immediately on bootstrap
         this.cleanupOldCompletedBookings();
+        this.cleanupExpiredTemporaryPermissions();
 
         // Run cleanup job every 24 hours
         const ONEDAY_MS = 24 * 60 * 60 * 1000;
         this.cleanupIntervalId = setInterval(() => {
             this.cleanupOldCompletedBookings();
         }, ONEDAY_MS);
+
+        // Run temporary permissions cleanup every 1 minute
+        const ONE_MINUTE_MS = 60 * 1000;
+        this.tempPermissionIntervalId = setInterval(() => {
+            this.cleanupExpiredTemporaryPermissions();
+        }, ONE_MINUTE_MS);
     }
 
     /**
@@ -30,8 +39,12 @@ class SchedulerService {
         if (this.cleanupIntervalId) {
             clearInterval(this.cleanupIntervalId);
             this.cleanupIntervalId = null;
-            logger.info("⏰ Scheduler Service: Stopped background workers.");
         }
+        if (this.tempPermissionIntervalId) {
+            clearInterval(this.tempPermissionIntervalId);
+            this.tempPermissionIntervalId = null;
+        }
+        logger.info("⏰ Scheduler Service: Stopped background workers.");
     }
 
     /**
@@ -73,6 +86,21 @@ class SchedulerService {
             }
         } catch (err) {
             logger.error(`❌ Scheduler Service Exception during cleanup: ${err.message}`);
+        }
+    }
+
+    /**
+     * Cleanup expired temporary permissions
+     */
+    async cleanupExpiredTemporaryPermissions() {
+        try {
+            const now = new Date();
+            const result = await TemporaryPermission.deleteMany({ expiresAt: { $lte: now } });
+            if (result.deletedCount > 0) {
+                logger.info(`🧹 Scheduler Service: Purged ${result.deletedCount} expired TemporaryPermission entries.`);
+            }
+        } catch (err) {
+            logger.error(`❌ Scheduler Service Exception during temporary permissions cleanup: ${err.message}`);
         }
     }
 }

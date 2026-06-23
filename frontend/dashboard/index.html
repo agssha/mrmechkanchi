@@ -88,19 +88,8 @@
                 <span class="material-symbols-outlined text-xl">close</span>
             </button>
         </div>
-        <nav class="flex-1 space-y-1">
-            <button id="btn-tab-bookings" onclick="switchTab('bookings')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 border-r-4 border-blue-700 font-medium transition-all">
-                <span class="material-symbols-outlined">calendar_today</span>
-                <span class="text-sm">Manage Bookings</span>
-            </button>
-            <button id="btn-tab-mechanics" onclick="switchTab('mechanics')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-all">
-                <span class="material-symbols-outlined">engineering</span>
-                <span class="text-sm">Mechanic Profiles</span>
-            </button>
-            <button id="btn-tab-reviews" onclick="switchTab('reviews')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-all">
-                <span class="material-symbols-outlined">rate_review</span>
-                <span class="text-sm">Customer Reviews</span>
-            </button>
+        <nav id="sidebar-nav" class="flex-1 space-y-1">
+            <!-- Rendered dynamically -->
         </nav>
         <div class="pt-4 border-t border-slate-200">
             <div class="space-y-1">
@@ -125,31 +114,236 @@
             </div>
         </header>
 
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Awaiting Dispatch</p>
-                    <span class="material-symbols-outlined text-amber-600 bg-amber-50 p-2 rounded-lg">pending_actions</span>
+        <div id="tab-content-dashboard" class="tab-layer space-y-6">
+            <!-- Metrics Grid -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Awaiting Dispatch</p>
+                        <span class="material-symbols-outlined text-amber-600 bg-amber-50 p-2 rounded-lg">pending_actions</span>
+                    </div>
+                    <h3 id="metric-pending" class="text-3xl font-bold text-on-surface mt-1">0</h3>
                 </div>
-                <h3 id="metric-pending" class="text-3xl font-bold text-on-surface mt-1">0</h3>
-            </div>
-            <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Registered Mechanics</p>
-                    <span class="material-symbols-outlined text-purple-700 bg-purple-50 p-2 rounded-lg">engineering</span>
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Registered Mechanics</p>
+                        <span class="material-symbols-outlined text-purple-700 bg-purple-50 p-2 rounded-lg">engineering</span>
+                    </div>
+                    <h3 id="metric-mechanics" class="text-3xl font-bold text-on-surface mt-1">0</h3>
                 </div>
-                <h3 id="metric-mechanics" class="text-3xl font-bold text-on-surface mt-1">0</h3>
-            </div>
-            <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Total Closed Income</p>
-                    <span class="material-symbols-outlined text-emerald-700 bg-emerald-50 p-2 rounded-lg">payments</span>
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Total Closed Income</p>
+                        <span class="material-symbols-outlined text-emerald-700 bg-emerald-50 p-2 rounded-lg">payments</span>
+                    </div>
+                    <h3 id="metric-revenue" class="text-3xl font-bold text-on-surface mt-1">₹0</h3>
                 </div>
-                <h3 id="metric-revenue" class="text-3xl font-bold text-on-surface mt-1">₹0</h3>
-            </div>
-        </section>
+            </section>
 
-        <div id="tab-content-bookings" class="tab-layer space-y-6">
+            <!-- Dashboard Details Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Quick-View Bookings -->
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-600">bolt</span>
+                            Quick-View Bookings (Recent)
+                        </h3>
+                        <button onclick="goToBookingsTab()" class="text-xs text-blue-600 hover:underline font-semibold">View All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500">
+                                    <th class="py-2.5 px-3 font-semibold">Customer</th>
+                                    <th class="py-2.5 px-3 font-semibold">Status</th>
+                                    <th class="py-2.5 px-3 font-semibold">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quick-bookings-body" class="divide-y divide-slate-100">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Portal Statistics Tracker -->
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-600">insights</span>
+                        Portal Statistics & Health
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div class="text-slate-500 font-medium mb-1">Session Mode</div>
+                            <div id="portal-session-mode" class="font-bold text-slate-800">Secure JWT</div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div class="text-slate-500 font-medium mb-1">Database Link</div>
+                            <div class="font-bold text-emerald-600 flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-ping"></span>
+                                Connected
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div class="text-slate-500 font-medium mb-1">Active Staff Cache</div>
+                            <div id="portal-active-staff" class="font-bold text-slate-800">0 loaded</div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div class="text-slate-500 font-medium mb-1">Environment</div>
+                            <div id="portal-env" class="font-bold text-slate-800">Production</div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-800 flex items-start gap-2">
+                        <span class="material-symbols-outlined text-sm mt-0.5">info</span>
+                        <span>This panel monitors live metrics and staff statuses. Standard Admins are restricted to assigned bookings and customer registry.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assigned Bookings Tab -->
+        <div id="tab-content-assigned-bookings" class="tab-layer hidden space-y-6">
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Issue Description</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Job Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Assigned Mechanic</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="assigned-bookings-table-body" class="divide-y divide-slate-100">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Customers Tab -->
+        <div id="tab-content-customers" class="tab-layer hidden space-y-6">
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Customer Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Mobile Phone</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Email Address</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Total Bookings</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Total Paid Amount</th>
+                    </tr>
+                    </thead>
+                    <tbody id="customers-table-body" class="divide-y divide-slate-100">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-content-settings" class="tab-layer hidden space-y-6">
+            <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-slate-100 max-w-xl">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue-600">settings</span>
+                    Portal Settings
+                </h3>
+                <div class="space-y-4 text-sm text-slate-600">
+                    <p>Configure dashboard refresh intervals, notification preferences, and toggle maintenance mode settings here.</p>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                        <label class="flex items-center gap-2 font-medium text-slate-700">
+                            <input type="checkbox" checked disabled class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            Auto Refresh (Every 8s)
+                        </label>
+                        <label class="flex items-center gap-2 font-medium text-slate-700">
+                            <input type="checkbox" checked disabled class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            Enable Activity Logs Logging
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Denied Tab -->
+        <div id="tab-content-access-denied" class="tab-layer hidden space-y-6">
+            <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center py-16">
+                <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-4xl">block</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Access Denied</h3>
+                <p class="text-sm text-slate-500 max-w-md mb-6">
+                    You do not have authorization to view this tab or perform administrative operations on it. If you believe this is an error, please contact the Super Admin.
+                </p>
+                <button onclick="switchTab('dashboard')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition shadow-sm">
+                    Back to Safety
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin Management Tab -->
+        <div id="tab-content-admins" class="tab-layer hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">System Admin Management</h3>
+                    <p class="text-xs text-slate-500">Create, monitor, and override role privileges for administrative staff profiles.</p>
+                </div>
+                <button type="button" onclick="openCreateAdminModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition">
+                    <span class="material-symbols-outlined text-lg">person_add</span>
+                    Create Admin
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administrator Details</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role Profile</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Permissions</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Login Event</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action Overrides</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admins-table-body" class="divide-y divide-slate-100">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity Logs Tab -->
+        <div id="tab-content-logs" class="tab-layer hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-100 gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Audit Trails & Logs</h3>
+                    <p class="text-xs text-slate-500">Real-time tracking of platform configuration shifts, assignment updates, and admin overrides.</p>
+                </div>
+                <div class="relative w-full sm:w-64">
+                    <span class="material-symbols-outlined text-slate-400 absolute left-3 top-2.5 text-lg">search</span>
+                    <input type="text" id="logs-search" oninput="filterLogs(this.value)" placeholder="Search audits..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full focus:outline-none focus:border-blue-500" />
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Operator Profile</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Action Name</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Operation Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <div id="tab-content-bookings" class="tab-layer hidden space-y-6">
             <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 border-b border-slate-100">
@@ -347,7 +541,117 @@
     </div>
 </div>
 
+<!-- Create Admin Modal -->
+<div id="create-admin-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative mx-4">
+        <button onclick="closeCreateAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600">person_add</span>
+            Create Admin Profile
+        </h3>
+        <form onsubmit="handleCreateAdminSubmit(event)">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+                    <input type="text" id="create-admin-name" required placeholder="Aishwarya" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
+                    <input type="email" id="create-admin-email" required placeholder="aishu@mrmech.com" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Phone Number (10 digits)</label>
+                    <input type="tel" id="create-admin-phone" pattern="[0-9]{10}" required placeholder="9566721519" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="create-admin-password" required placeholder="••••••••" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Role Type</label>
+                    <select id="create-admin-role" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                        <option value="ADMIN">Standard Admin (Restricted)</option>
+                        <option value="SUPER_ADMIN">Super Admin (Unrestricted)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closeCreateAdminModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm transition">Cancel</button>
+                <button type="submit" id="create-admin-submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition shadow-sm">Save Profile</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Manage Permissions Modal -->
+<div id="permissions-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative mx-4">
+        <button onclick="closePermissionsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600">settings_accessibility</span>
+            Manage Admin Permissions
+        </h3>
+        <p id="permissions-modal-desc" class="text-xs text-slate-500 mb-4">Modify security flags for standard admin accounts.</p>
+        <input type="hidden" id="permissions-admin-id" />
+        <form onsubmit="handlePermissionsSubmit(event)">
+            <div class="space-y-4">
+                <div class="p-3 bg-slate-50 rounded-lg space-y-2 border border-slate-100">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="perm-bookingEdit" class="rounded text-blue-600 focus:ring-blue-500/20" />
+                        <div>
+                            <span class="text-sm font-semibold text-slate-700 block">Edit Bookings</span>
+                            <span class="text-[10px] text-slate-500 block">Allows altering customer info and mechanic dispatches.</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer pt-2 border-t border-slate-200/50">
+                        <input type="checkbox" id="perm-bookingDelete" class="rounded text-blue-600 focus:ring-blue-500/20" />
+                        <div>
+                            <span class="text-sm font-semibold text-slate-700 block">Delete Bookings</span>
+                            <span class="text-[10px] text-slate-500 block">Allows erasing bookings from the catalog (triggers logs).</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer pt-2 border-t border-slate-200/50">
+                        <input type="checkbox" id="perm-reviewAccess" class="rounded text-blue-600 focus:ring-blue-500/20" />
+                        <div>
+                            <span class="text-sm font-semibold text-slate-700 block">View Reviews</span>
+                            <span class="text-[10px] text-slate-500 block">Appends Reviews page to the standard admin's sidebar.</span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Duration Allocation Type</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                            <input type="radio" name="perm-duration-type" value="permanent" checked onchange="toggleDurationInput(false)" class="text-blue-600" />
+                            Permanent Access
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                            <input type="radio" name="perm-duration-type" value="temporary" onchange="toggleDurationInput(true)" class="text-blue-600" />
+                            Temporary Grant
+                        </label>
+                    </div>
+                </div>
+
+                <div id="temp-duration-wrapper" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Temporary Duration (minutes)</label>
+                    <input type="number" id="perm-duration-value" min="1" max="1440" value="60" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closePermissionsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm transition">Cancel</button>
+                <button type="submit" id="permissions-submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition shadow-sm">Apply Override</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+
 // Dynamic CSS spinner injection and setButtonLoading helper function
 (function() {
     const style = document.createElement('style');
@@ -405,31 +709,198 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // Helper to decode JWT token client-side
+    function decodeToken(t) {
+        try {
+            const base64Url = t.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const decoded = decodeToken(token);
+    const currentUser = decoded || { role: "admin", phone: "", name: "" };
+    
+    // Normalize role to uppercase
+    currentUser.role = (currentUser.role || "admin").toUpperCase();
+    localStorage.setItem("role", currentUser.role);
+
+    const MENU_ROLES = {
+        SUPER_ADMIN: [
+            { tab: "dashboard", label: "Dashboard", icon: "dashboard" },
+            { tab: "bookings", label: "Bookings", icon: "calendar_today" },
+            { tab: "reviews", label: "Reviews", icon: "rate_review" },
+            { tab: "admins", label: "Admin Management", icon: "shield_person" },
+            { tab: "logs", label: "Activity Logs", icon: "history" },
+            { tab: "mechanics", label: "Mechanic Profile", icon: "engineering" },
+            { tab: "settings", label: "Settings", icon: "settings" }
+        ],
+        ADMIN: [
+            { tab: "dashboard", label: "Dashboard", icon: "dashboard" },
+            { tab: "assigned-bookings", label: "Assigned Bookings", icon: "calendar_today" },
+            { tab: "mechanics", label: "Mechanic Profile", icon: "engineering" },
+            { tab: "customers", label: "Customers", icon: "groups" }
+        ]
+    };
+
+    function getVisibleMenus() {
+        const baseMenus = MENU_ROLES[currentUser.role] || MENU_ROLES.ADMIN;
+        // Check if reviews tab needs to be appended for standard ADMIN with reviewAccess
+        if (currentUser.role === "ADMIN") {
+            const hasReviewAccess = currentUser.permissions && (
+                currentUser.permissions.reviewAccess === true || 
+                currentUser.permissions.reviews === true
+            );
+            if (hasReviewAccess && !baseMenus.some(m => m.tab === "reviews")) {
+                return [
+                    ...baseMenus.slice(0, 2),
+                    { tab: "reviews", label: "Reviews", icon: "rate_review" },
+                    ...baseMenus.slice(2)
+                ];
+            }
+        }
+        return baseMenus;
+    }
+
+    function renderSidebar() {
+        const container = document.getElementById("sidebar-nav");
+        if (!container) return;
+
+        const allowedMenus = getVisibleMenus();
+        container.innerHTML = allowedMenus.map(menu => {
+            return `
+                <button id="btn-tab-${menu.tab}" onclick="switchTab('${menu.tab}')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-all">
+                    <span class="material-symbols-outlined">${menu.icon}</span>
+                    <span class="text-sm font-medium">${menu.label}</span>
+                </button>
+            `;
+        }).join("");
+    }
+
+    function updatePageHeader(tab) {
+        const titleEl = document.getElementById("page-title");
+        const subtitleEl = document.getElementById("page-subtitle");
+        if (!titleEl || !subtitleEl) return;
+
+        switch (tab) {
+            case "dashboard":
+                titleEl.innerText = "Service Dashboard";
+                subtitleEl.innerText = "Real-time status monitor and staff deployment controls.";
+                break;
+            case "bookings":
+                titleEl.innerText = "Manage Bookings";
+                subtitleEl.innerText = "Complete catalog of repair appointments and schedules.";
+                break;
+            case "assigned-bookings":
+                titleEl.innerText = "Assigned Bookings";
+                subtitleEl.innerText = "Currently dispatched active staff work list.";
+                break;
+            case "mechanics":
+                titleEl.innerText = "Mechanic Profiles";
+                subtitleEl.innerText = "Register new staff profiles or execute password overrides.";
+                break;
+            case "customers":
+                titleEl.innerText = "Customer Database";
+                subtitleEl.innerText = "Registry of clients, order histories, and aggregate values.";
+                break;
+            case "reviews":
+                titleEl.innerText = "Customer Feedback";
+                subtitleEl.innerText = "Read reviews, ratings, and customer suggestions.";
+                break;
+            case "settings":
+                titleEl.innerText = "System Settings";
+                subtitleEl.innerText = "Manage configuration constants and portal options.";
+                break;
+            case "admins":
+                titleEl.innerText = "Admin Management";
+                subtitleEl.innerText = "Control security parameters and admin user records.";
+                break;
+            case "logs":
+                titleEl.innerText = "Activity History Logs";
+                subtitleEl.innerText = "Trace administrative mutations and credential checks.";
+                break;
+            case "access-denied":
+                titleEl.innerText = "System Authorization Denied";
+                subtitleEl.innerText = "Restricted administrative zone warning.";
+                break;
+        }
+    }
+
+    function showAccessDenied() {
+        switchTab("access-denied");
+    }
+
+    let currentTab = "dashboard";
+
     window.switchTab = function (targetTab) {
+        // 1. Temporary Debugging Logs (Requirement 5)
+        const allowedMenus = getVisibleMenus();
+        console.log("Current User:", currentUser);
+        console.log("Current Role:", currentUser.role);
+        console.log("Current Permissions:", currentUser.permissions);
+        console.log("Visible Menus:", allowedMenus);
+
+        const isAllowed = allowedMenus.some(t => t.tab === targetTab) || targetTab === "access-denied";
+
+        if (!isAllowed) {
+            // Block access and show premium Access Denied page (Requirement 7)
+            showAccessDenied();
+            return;
+        }
+
+        currentTab = targetTab;
 
         document.querySelectorAll(".tab-layer").forEach(layer => {
             layer.classList.add("hidden");
         });
 
-        document.getElementById(`tab-content-${targetTab}`).classList.remove("hidden");
+        const targetLayer = document.getElementById(`tab-content-${targetTab}`);
+        if (targetLayer) {
+            targetLayer.classList.remove("hidden");
+        }
 
-        ["bookings", "mechanics", "reviews"].forEach(tab => {
-            document.getElementById(`btn-tab-${tab}`).className =
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-all";
+        document.querySelectorAll("#sidebar-nav button").forEach(btn => {
+            btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-all";
         });
 
-        document.getElementById(`btn-tab-${targetTab}`).className =
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 border-r-4 border-blue-700 font-semibold transition-all";
+        const activeBtn = document.getElementById(`btn-tab-${targetTab}`);
+        if (activeBtn) {
+            activeBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 border-r-4 border-blue-700 font-semibold transition-all";
+        }
 
-        if (targetTab === "mechanics") loadMechanics();
-        if (targetTab === "reviews") loadReviews();
+        updatePageHeader(targetTab);
+
+        if (targetTab === "dashboard") renderDashboard();
         if (targetTab === "bookings") loadBookings();
+        if (targetTab === "assigned-bookings") renderAssignedBookings();
+        if (targetTab === "mechanics") loadMechanics();
+        if (targetTab === "customers") renderCustomers();
+        if (targetTab === "reviews") loadReviews();
+        if (targetTab === "admins") loadAdmins();
+        if (targetTab === "logs") loadActivityLogs();
     };
 
-    window.logoutAdmin = function () {
+
+    window.logoutAdmin = async function () {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin-logout`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) alert(data.message || "Logout failed");
+        } catch (err) {
+            console.error(err);
+        }
         localStorage.clear();
         window.location.href = "/admin";
     };
+
 
     async function loadMechanics() {
         try {
@@ -537,11 +1008,168 @@ document.addEventListener("DOMContentLoaded", () => {
             bookingsCache = data.bookings || [];
 
             updateMetrics();
-            renderBookings();
+            
+            // Re-render active tab content if necessary
+            if (currentTab === "dashboard") renderDashboard();
+            if (currentTab === "bookings") renderBookings();
+            if (currentTab === "assigned-bookings") renderAssignedBookings();
+            if (currentTab === "customers") renderCustomers();
 
         } catch (err) {
             console.error(err);
         }
+    }
+
+    window.goToBookingsTab = function() {
+        const role = (currentUser.role || "admin").toUpperCase();
+        if (role === "SUPER_ADMIN") {
+            switchTab("bookings");
+        } else {
+            switchTab("assigned-bookings");
+        }
+    };
+
+    function renderDashboard() {
+        updateMetrics();
+
+        const activeStaffEl = document.getElementById("portal-active-staff");
+        if (activeStaffEl) {
+            activeStaffEl.innerText = `${mechanics.length} loaded`;
+        }
+
+        const quickBody = document.getElementById("quick-bookings-body");
+        if (!quickBody) return;
+
+        if (!bookingsCache.length) {
+            quickBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400">No bookings</td></tr>`;
+            return;
+        }
+
+        const recentBookings = [...bookingsCache].slice(0, 5);
+        quickBody.innerHTML = recentBookings.map(b => {
+            return `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2 px-3">
+                        <div class="font-semibold text-slate-800">${b.name || "Customer"}</div>
+                        <div class="text-[10px] text-slate-400">${b.mobileNumber || ""}</div>
+                    </td>
+                    <td class="py-2 px-3">
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] ${getBadge(b.status)}">
+                            ${b.status}
+                        </span>
+                    </td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${b.estimatedPrice || b.price || 0}</td>
+                </tr>
+            `;
+        }).join("");
+
+        const envEl = document.getElementById("portal-env");
+        if (envEl) {
+            envEl.innerText = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+                ? "Development" 
+                : "Production";
+        }
+    }
+
+    function renderAssignedBookings() {
+        const tbody = document.getElementById("assigned-bookings-table-body");
+        if (!tbody) return;
+
+        const assignedList = bookingsCache.filter(b => b.assignedMechanicId || b.mechanicName);
+
+        if (!assignedList.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-10 text-slate-400 font-medium">No assigned bookings found</td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        assignedList.forEach(b => {
+            const row = document.createElement("tr");
+            row.className = "hover:bg-slate-50 transition-colors";
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800">${b.name || "Customer"}</div>
+                    <div class="text-xs text-slate-500">${b.mobileNumber || ""}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm text-slate-700">${b.problemDescription || ""}</div>
+                    <div class="text-xs text-emerald-600 mt-1">₹${b.estimatedPrice || b.price || 0}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded-full text-xs ${getBadge(b.status)}">
+                        ${b.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="font-medium text-slate-800">${b.mechanicName || "Unknown Staff"}</div>
+                    <div class="text-xs text-slate-500">${b.assignedMechanicId || ""}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <button class="editBtn bg-slate-800 text-white px-3 py-1.5 rounded text-xs hover:bg-slate-900 transition flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">edit</span>
+                            Edit
+                        </button>
+                        <button class="deleteBtn bg-red-600 text-white px-3 py-1.5 rounded text-xs hover:bg-red-700 transition flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">delete</span>
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            row.querySelector(".editBtn").onclick = () => openEditModal(b._id);
+            row.querySelector(".deleteBtn").onclick = () => openDeleteModal(b._id);
+            tbody.appendChild(row);
+        });
+    }
+
+    function renderCustomers() {
+        const tbody = document.getElementById("customers-table-body");
+        if (!tbody) return;
+
+        const customerGroups = {};
+        bookingsCache.forEach(b => {
+            const phone = b.mobileNumber || "N/A";
+            if (!customerGroups[phone]) {
+                customerGroups[phone] = {
+                    name: b.name || "Customer",
+                    phone: phone,
+                    email: b.userEmail || "N/A",
+                    totalBookings: 0,
+                    totalPaid: 0
+                };
+            }
+            customerGroups[phone].totalBookings++;
+            if (b.paymentStatus === "Paid") {
+                customerGroups[phone].totalPaid += Number(b.estimatedPrice || b.price || 0);
+            }
+        });
+
+        const list = Object.values(customerGroups);
+
+        if (!list.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-10 text-slate-400 font-medium">No customers found</td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = list.map(c => {
+            return `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-bold text-slate-800">${c.name}</td>
+                    <td class="px-6 py-4 text-slate-600">${c.phone}</td>
+                    <td class="px-6 py-4 text-slate-600">${c.email}</td>
+                    <td class="px-6 py-4 font-semibold text-slate-800">${c.totalBookings}</td>
+                    <td class="px-6 py-4 text-emerald-600 font-semibold">₹${c.totalPaid}</td>
+                </tr>
+            `;
+        }).join("");
     }
 
     async function loadReviews() {
@@ -903,11 +1531,362 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // =====================================================
+    // SUPER ADMIN - ADMIN MANAGEMENT LOGIC
+    // =====================================================
+    let adminsList = [];
+    let activityLogs = [];
+
+    window.openCreateAdminModal = function() {
+        document.getElementById("create-admin-name").value = "";
+        document.getElementById("create-admin-email").value = "";
+        document.getElementById("create-admin-phone").value = "";
+        document.getElementById("create-admin-password").value = "";
+        document.getElementById("create-admin-role").value = "ADMIN";
+        document.getElementById("create-admin-modal").classList.remove("hidden");
+    };
+
+    window.closeCreateAdminModal = function() {
+        document.getElementById("create-admin-modal").classList.add("hidden");
+    };
+
+    window.handleCreateAdminSubmit = async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById("create-admin-submit-btn");
+        const name = document.getElementById("create-admin-name").value.trim();
+        const email = document.getElementById("create-admin-email").value.trim();
+        const phone = document.getElementById("create-admin-phone").value.trim();
+        const password = document.getElementById("create-admin-password").value;
+        const role = document.getElementById("create-admin-role").value;
+
+        setButtonLoading(submitBtn, true, "Creating Admin...");
+        try {
+            const res = await fetch(`${API_BASE}/api/super-admin/create-admin`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, email, phone, password, role })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || "Failed to create admin");
+            } else {
+                alert("Admin created successfully!");
+                closeCreateAdminModal();
+                loadAdmins();
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error creating admin");
+        } finally {
+            setButtonLoading(submitBtn, false);
+        }
+    };
+
+    async function loadAdmins() {
+        try {
+            const res = await fetch(`${API_BASE}/api/super-admin/admins`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to load admins");
+            const data = await res.json();
+            adminsList = data.admins || [];
+            renderAdmins();
+        } catch (err) {
+            console.error(err);
+            const tbody = document.getElementById("admins-table-body");
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-500 font-medium">Failed to retrieve admin list</td></tr>`;
+            }
+        }
+    }
+
+    function renderAdmins() {
+        const tbody = document.getElementById("admins-table-body");
+        if (!tbody) return;
+
+        if (adminsList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">No administrators found</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = adminsList.map(admin => {
+            const lastLoginText = admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : "Never Logged In";
+            const roleBadge = admin.role === "SUPER_ADMIN"
+                ? `<span class="px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700 rounded-md border border-purple-100">Super Admin</span>`
+                : `<span class="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 rounded-md border border-blue-100">Standard Admin</span>`;
+
+            // Render permission badges
+            let permissionBadges = "";
+            if (admin.role === "SUPER_ADMIN") {
+                permissionBadges = `<span class="text-xs text-slate-500 font-medium">Bypasses all guards (Unrestricted)</span>`;
+            } else {
+                const perms = admin.permissions || {};
+                const list = [];
+                if (perms.bookingEdit) list.push("Edit Bookings");
+                if (perms.bookingDelete) list.push("Delete Bookings");
+                if (perms.reviewAccess) list.push("View Reviews");
+                
+                // Add active temporary permissions if they are not permanent
+                if (admin.temporaryPermissions && admin.temporaryPermissions.length > 0) {
+                    admin.temporaryPermissions.forEach(tp => {
+                        const expiry = new Date(tp.expiresAt);
+                        if (expiry > new Date()) {
+                            let label = "";
+                            if (tp.permission === "bookingEdit") label = "Edit Bookings (Temp)";
+                            if (tp.permission === "bookingDelete") label = "Delete Bookings (Temp)";
+                            if (tp.permission === "reviewAccess") label = "View Reviews (Temp)";
+                            
+                            if (label && !list.includes(label)) {
+                                list.push(`${label}`);
+                            }
+                        }
+                    });
+                }
+
+                if (list.length === 0) {
+                    permissionBadges = `<span class="text-xs text-red-500 font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-100">None Granted</span>`;
+                } else {
+                    permissionBadges = list.map(p => `<span class="inline-block text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-100 mr-1 mb-1">${p}</span>`).join("");
+                }
+            }
+
+            const actionButtons = admin.role === "SUPER_ADMIN"
+                ? `<span class="text-xs text-slate-400">Locked</span>`
+                : `
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="openPermissionsModal('${admin._id}', '${admin.name}', ${admin.permissions?.bookingEdit || false}, ${admin.permissions?.bookingDelete || false}, ${admin.permissions?.reviewAccess || false})" class="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition">Permissions</button>
+                    <button type="button" onclick="deleteAdmin('${admin._id}')" class="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition">Remove</button>
+                </div>`;
+
+            return `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <span class="font-bold text-slate-800 block">${admin.name}</span>
+                        <span class="text-xs text-slate-500 block">${admin.email} | ${admin.phone}</span>
+                    </td>
+                    <td class="px-6 py-4">${roleBadge}</td>
+                    <td class="px-6 py-4"><div class="flex flex-wrap">${permissionBadges}</div></td>
+                    <td class="px-6 py-4 text-xs text-slate-500">${lastLoginText}</td>
+                    <td class="px-6 py-4 text-right">${actionButtons}</td>
+                </tr>`;
+        }).join("");
+    }
+
+    window.openPermissionsModal = function(adminId, adminName, pEdit, pDelete, pReview) {
+        document.getElementById("permissions-admin-id").value = adminId;
+        document.getElementById("permissions-modal-desc").innerText = `Override authorization flags for ${adminName}`;
+        document.getElementById("perm-bookingEdit").checked = pEdit;
+        document.getElementById("perm-bookingDelete").checked = pDelete;
+        document.getElementById("perm-reviewAccess").checked = pReview;
+        
+        // Reset inputs
+        const radioPerm = document.querySelector('input[name="perm-duration-type"][value="permanent"]');
+        if (radioPerm) radioPerm.click();
+        document.getElementById("perm-duration-value").value = "60";
+        
+        document.getElementById("permissions-modal").classList.remove("hidden");
+    };
+
+    window.closePermissionsModal = function() {
+        document.getElementById("permissions-modal").classList.add("hidden");
+    };
+
+    window.toggleDurationInput = function(show) {
+        const wrapper = document.getElementById("temp-duration-wrapper");
+        if (show) {
+            wrapper.classList.remove("hidden");
+        } else {
+            wrapper.classList.add("hidden");
+        }
+    };
+
+    window.handlePermissionsSubmit = async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById("permissions-submit-btn");
+        const adminId = document.getElementById("permissions-admin-id").value;
+        const durationType = document.querySelector('input[name="perm-duration-type"]:checked').value;
+        const durationValue = document.getElementById("perm-duration-value").value;
+
+        const permsToCheck = [
+            { name: "bookingEdit", checked: document.getElementById("perm-bookingEdit").checked },
+            { name: "bookingDelete", checked: document.getElementById("perm-bookingDelete").checked },
+            { name: "reviewAccess", checked: document.getElementById("perm-reviewAccess").checked }
+        ];
+
+        setButtonLoading(submitBtn, true, "Saving...");
+        try {
+            for (const item of permsToCheck) {
+                if (item.checked) {
+                    await fetch(`${API_BASE}/api/super-admin/grant-permission`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            adminId,
+                            permission: item.name,
+                            durationType,
+                            durationValue
+                        })
+                    });
+                } else {
+                    await fetch(`${API_BASE}/api/super-admin/revoke-permission`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            adminId,
+                            permission: item.name,
+                            permissionType: "permanent"
+                        })
+                    });
+                    await fetch(`${API_BASE}/api/super-admin/revoke-permission`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            adminId,
+                            permission: item.name,
+                            permissionType: "temporary"
+                        })
+                    });
+                }
+            }
+            alert("Permissions updated successfully!");
+            closePermissionsModal();
+            loadAdmins();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update permissions fully.");
+        } finally {
+            setButtonLoading(submitBtn, false);
+        }
+    };
+
+    window.deleteAdmin = async function(adminId) {
+        if (!confirm("Are you sure you want to permanently remove this admin profile?")) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/super-admin/admin/${adminId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || "Failed to remove admin");
+            } else {
+                alert("Admin deleted successfully!");
+                loadAdmins();
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error deleting admin");
+        }
+    };
+
+    // =====================================================
+    // SUPER ADMIN - AUDIT TRAILS & LOGS LOGIC
+    // =====================================================
+    async function loadActivityLogs() {
+        try {
+            const res = await fetch(`${API_BASE}/api/super-admin/activity-logs`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to fetch logs");
+            const data = await res.json();
+            activityLogs = data.logs || [];
+            renderActivityLogs(activityLogs);
+        } catch (err) {
+            console.error(err);
+            const tbody = document.getElementById("logs-table-body");
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-red-500 font-medium">Failed to retrieve audit log feed</td></tr>`;
+            }
+        }
+    }
+
+    function renderActivityLogs(logsList) {
+        const tbody = document.getElementById("logs-table-body");
+        if (!tbody) return;
+
+        if (logsList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No activity logs recorded</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logsList.map(log => {
+            const dateStr = new Date(log.timestamp).toLocaleString();
+            const detailsVal = typeof log.details === "object" ? JSON.stringify(log.details) : (log.details || "-");
+            
+            let detailsHtml = `<span class="text-slate-600 block">${detailsVal}</span>`;
+            if (log.actionType === "Edit" || log.actionType === "Delete") {
+                const badge = log.actionType === "Edit" 
+                    ? `<span class="bg-amber-50 text-amber-700 border border-amber-100 text-[10px] px-1.5 py-0.5 rounded font-bold mr-2">Edit</span>`
+                    : `<span class="bg-red-50 text-red-700 border border-red-100 text-[10px] px-1.5 py-0.5 rounded font-bold mr-2">Delete</span>`;
+                detailsHtml = `
+                    <div class="flex items-center gap-1">
+                        ${badge}
+                        <span class="text-slate-600 block">Booking: ${log.bookingId || "N/A"}</span>
+                    </div>`;
+            }
+
+            return `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 text-xs font-semibold text-slate-500 whitespace-nowrap">${dateStr}</td>
+                    <td class="px-6 py-4 font-bold text-slate-700">${log.adminId || log.adminName || "SYSTEM"}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-block text-xs font-semibold bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200">${log.action || "Log Event"}</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600 max-w-sm overflow-hidden text-ellipsis">${detailsHtml}</td>
+                </tr>`;
+        }).join("");
+    }
+
+    window.filterLogs = function(query) {
+        const cleaned = query.trim().toLowerCase();
+        if (!cleaned) {
+            renderActivityLogs(activityLogs);
+            return;
+        }
+        const filtered = activityLogs.filter(log => {
+            const admin = (log.adminId || "").toLowerCase();
+            const action = (log.action || "").toLowerCase();
+            const details = typeof log.details === "object" ? JSON.stringify(log.details).toLowerCase() : (log.details || "").toLowerCase();
+            return admin.includes(cleaned) || action.includes(cleaned) || details.includes(cleaned);
+        });
+        renderActivityLogs(filtered);
+    };
+
     async function init() {
+        // Fetch current user details dynamically to align permissions
+        try {
+            const profileRes = await fetch(`${API_BASE}/api/auth/admin-profile`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                if (profileData.admin) {
+                    currentUser.permissions = profileData.admin.permissions || {};
+                    currentUser.role = (profileData.admin.role || currentUser.role).toUpperCase();
+                }
+            }
+        } catch (e) {
+            console.error("Profile sync failed, using JWT payload:", e);
+        }
+        renderSidebar();
+        switchTab("dashboard");
         await loadMechanics();
         await loadBookings();
         setInterval(loadBookings, 8000);
     }
+
 
     init();
 

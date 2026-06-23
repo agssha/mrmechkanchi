@@ -120,9 +120,10 @@
             };
         })();
 
-        // 🔥 UPDATED: Base API URL
-        const API = "https://mrmechkanchi-1.onrender.com";
-
+        // Dynamic API URL to support both local and production environments
+        const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+            ? window.location.origin
+            : "https://mrmechkanchi-1.onrender.com";
 
         async function loginAdmin(btn) {
             const phone = document.getElementById("phone").value.trim();
@@ -139,7 +140,6 @@
             setButtonLoading(btn, true, "Logging In... Please Wait");
 
             try {
-                // ✅ Sends request to https://mrmechkanchi-1.onrender.com/auth/admin-login
                 const res = await fetch(`${API}/api/auth/admin-login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -154,7 +154,7 @@
                     return;
                 }
 
-                // ✅ SAVE SEGREGATED STORAGE VALUES
+                // SAVE SEGREGATED STORAGE VALUES
                 localStorage.setItem("token", data.token);   
                 localStorage.setItem("role", "admin"); // Helpful flag to check role client-side
 

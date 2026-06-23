@@ -7,141 +7,141 @@ class EmailService {
         this.initPromise = null;
     }
 
-    async getTransporter() {
-    if (this.transporter) {
-        return this.transporter;
-    }
+//     async getTransporter() {
+//     if (this.transporter) {
+//         return this.transporter;
+//     }
 
-    if (this.initPromise) {
+//     if (this.initPromise) {
+//         return this.initPromise;
+//     }
+
+//     this.initPromise = (async () => {
+//         const user = process.env.SMTP_USER;
+//         const pass = process.env.SMTP_PASS;
+
+//         logger.info("SMTP CONFIG", {
+//             host: process.env.SMTP_HOST,
+//             port: process.env.SMTP_PORT,
+//             user: user ? "SET" : "NOT SET"
+//         });
+
+//         if (!user || !pass) {
+//             logger.error("SMTP credentials missing");
+//             return null;
+//         }
+
+//         this.transporter = nodemailer.createTransport({
+//             host: "smtp.gmail.com",
+//             port: 587,
+//             secure: false,
+//             auth: {
+//                 user,
+//                 pass
+//             },
+//             requireTLS: true,
+//             connectionTimeout: 30000,
+//             greetingTimeout: 30000,
+//             socketTimeout: 30000,
+//             debug: true,
+//             logger: true
+//         });
+
+//         try {
+//             await this.transporter.verify();
+//             logger.info("✅ SMTP connection verified");
+//         } catch (error) {
+//             logger.error("❌ SMTP verification failed", error);
+
+//             this.transporter = null;
+//             this.initPromise = null;
+
+//             throw error;
+//         }
+
+//         return this.transporter;
+//     })();
+
+//     return this.initPromise;
+// }
+
+    
+     // Lazily resolve SMTP host to IPv4 and create Nodemailer transporter.
+      //Recreates transporter if previous sending attempts failed.
+     
+     async getTransporter() {
+        if (this.transporter) {
+            return this.transporter;
+        }
+        if (this.initPromise) {
+            return this.initPromise;
+        }
+
+        this.initPromise = (async () => {
+            const host = process.env.SMTP_HOST;
+            const port = process.env.SMTP_PORT;
+            const user = process.env.SMTP_USER;
+            const pass = process.env.SMTP_PASS;
+
+            if (!user || !pass) {
+                logger.warn("⚠️ SMTP credentials not fully configured in .env. Deleted booking audits will be logged instead of emailed.");
+                return null;
+            }
+
+            if (host) {
+                let resolvedHost = host;
+                let tlsOptions = {};
+
+                const net = require("net");
+                // Skip DNS resolution if host is already an IP address
+                if (!net.isIP(host)) {
+                    try {
+                        const dns = require("dns").promises;
+                        // Force resolution to IPv4 address using dns.lookup to bypass Render's lack of outbound IPv6 routing.
+                        // dns.lookup is preferred over dns.resolve4 as it respects OS-level hosts/resolver settings.
+                        const lookup = await dns.lookup(host, { family: 4 });
+                        if (lookup && lookup.address) {
+                            resolvedHost = lookup.address;
+                            tlsOptions = { servername: host }; // Necessary for SNI and TLS certificate verification
+                            logger.info(`🌐 DNS Resolution: Resolved SMTP host ${host} to IPv4 address ${resolvedHost}`);
+                        }
+                    } catch (dnsErr) {
+                        logger.error(`⚠️ DNS Resolution failure for ${host}: ${dnsErr.message}. Falling back to hostname.`);
+                    }
+                }
+
+                logger.info(`⚙️ Configuring Nodemailer transporter with Host: ${resolvedHost}, Port: ${port}, Secure: ${port === "465"}`);
+                this.transporter = nodemailer.createTransport({
+                    host: resolvedHost,
+                    port: parseInt(port, 10) || 587,
+                    secure: Number(port) === 465,
+                    auth: { user, pass },
+                    connectionTimeout: 20000, // 20 seconds fail-fast
+                    greetingTimeout: 20000,
+                    socketTimeout: 20000,
+                    debug: true,
+                    logger: true,
+                    tls: {
+                        rejectUnauthorized: true,
+                        ...tlsOptions
+                    }
+                });
+            } else {
+                logger.info("⚙️ Configuring Nodemailer transporter with Gmail service preset.");
+                this.transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: { user, pass },
+                    connectionTimeout: 20000,
+                    greetingTimeout: 20000,
+                    socketTimeout: 20000
+                });
+            }
+
+            return this.transporter;
+        })();
+
         return this.initPromise;
-    }
-
-    this.initPromise = (async () => {
-        const user = process.env.SMTP_USER;
-        const pass = process.env.SMTP_PASS;
-
-        logger.info("SMTP CONFIG", {
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            user: user ? "SET" : "NOT SET"
-        });
-
-        if (!user || !pass) {
-            logger.error("SMTP credentials missing");
-            return null;
-        }
-
-        this.transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-            auth: {
-                user,
-                pass
-            },
-            requireTLS: true,
-            connectionTimeout: 30000,
-            greetingTimeout: 30000,
-            socketTimeout: 30000,
-            debug: true,
-            logger: true
-        });
-
-        try {
-            await this.transporter.verify();
-            logger.info("✅ SMTP connection verified");
-        } catch (error) {
-            logger.error("❌ SMTP verification failed", error);
-
-            this.transporter = null;
-            this.initPromise = null;
-
-            throw error;
-        }
-
-        return this.transporter;
-    })();
-
-    return this.initPromise;
-}
-
-    /**
-     * Lazily resolve SMTP host to IPv4 and create Nodemailer transporter.
-     * Recreates transporter if previous sending attempts failed.
-     */
-    // async getTransporter() {
-    //     if (this.transporter) {
-    //         return this.transporter;
-    //     }
-    //     if (this.initPromise) {
-    //         return this.initPromise;
-    //     }
-
-    //     this.initPromise = (async () => {
-    //         const host = process.env.SMTP_HOST;
-    //         const port = process.env.SMTP_PORT;
-    //         const user = process.env.SMTP_USER;
-    //         const pass = process.env.SMTP_PASS;
-
-    //         if (!user || !pass) {
-    //             logger.warn("⚠️ SMTP credentials not fully configured in .env. Deleted booking audits will be logged instead of emailed.");
-    //             return null;
-    //         }
-
-    //         if (host) {
-    //             let resolvedHost = host;
-    //             let tlsOptions = {};
-
-    //             const net = require("net");
-    //             // Skip DNS resolution if host is already an IP address
-    //             if (!net.isIP(host)) {
-    //                 try {
-    //                     const dns = require("dns").promises;
-    //                     // Force resolution to IPv4 address using dns.lookup to bypass Render's lack of outbound IPv6 routing.
-    //                     // dns.lookup is preferred over dns.resolve4 as it respects OS-level hosts/resolver settings.
-    //                     const lookup = await dns.lookup(host, { family: 4 });
-    //                     if (lookup && lookup.address) {
-    //                         resolvedHost = lookup.address;
-    //                         tlsOptions = { servername: host }; // Necessary for SNI and TLS certificate verification
-    //                         logger.info(`🌐 DNS Resolution: Resolved SMTP host ${host} to IPv4 address ${resolvedHost}`);
-    //                     }
-    //                 } catch (dnsErr) {
-    //                     logger.error(`⚠️ DNS Resolution failure for ${host}: ${dnsErr.message}. Falling back to hostname.`);
-    //                 }
-    //             }
-
-    //             logger.info(`⚙️ Configuring Nodemailer transporter with Host: ${resolvedHost}, Port: ${port}, Secure: ${port === "465"}`);
-    //             this.transporter = nodemailer.createTransport({
-    //                 host: resolvedHost,
-    //                 port: parseInt(port, 10) || 587,
-    //                 secure: Number(port) === 465,
-    //                 auth: { user, pass },
-    //                 connectionTimeout: 20000, // 20 seconds fail-fast
-    //                 greetingTimeout: 20000,
-    //                 socketTimeout: 20000,
-    //                 debug: true,
-    //                 logger: true,
-    //                 tls: {
-    //                     rejectUnauthorized: true,
-    //                     ...tlsOptions
-    //                 }
-    //             });
-    //         } else {
-    //             logger.info("⚙️ Configuring Nodemailer transporter with Gmail service preset.");
-    //             this.transporter = nodemailer.createTransport({
-    //                 service: "gmail",
-    //                 auth: { user, pass },
-    //                 connectionTimeout: 20000,
-    //                 greetingTimeout: 20000,
-    //                 socketTimeout: 20000
-    //             });
-    //         }
-
-    //         return this.transporter;
-    //     })();
-
-    //     return this.initPromise;
-    // }
+     }
 
     async sendDeletedBookingEmail(bookingData) {
         const recipient = "mr.mechkanchi@gmail.com";

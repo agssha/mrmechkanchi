@@ -8,18 +8,25 @@ const activityLogSchema = new mongoose.Schema({
     },
     adminName: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        default: ""
     },
     bookingId: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        default: null
     },
     actionType: {
         type: String,
-        required: true,
-        enum: ["Edit", "Delete"]
+        default: null
+    },
+    action: {
+        type: String,
+        default: null
+    },
+    details: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
     },
     timestamp: {
         type: Date,
@@ -40,3 +47,4 @@ const activityLogSchema = new mongoose.Schema({
 const ActivityLog = mongoose.model("ActivityLog", activityLogSchema);
 
 module.exports = ActivityLog;
+

@@ -14,8 +14,9 @@ const auth = (role) => (req, res, next) => {
         req.user = decoded;
 
         if (role) {
-            const rolesArray = Array.isArray(role) ? role : [role];
-            if (!rolesArray.includes(decoded.role)) {
+            const rolesArray = (Array.isArray(role) ? role : [role]).map(r => r.toUpperCase());
+            const userRole = (decoded.role || "").toUpperCase();
+            if (!rolesArray.includes(userRole)) {
                 return res.status(403).json({ message: "Forbidden: Unauthorized role profile." });
             }
         }

@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { Admin, User } = require("../models");
+const { Admin, User, TemporaryPermission } = require("../models");
 const AppError = require("../utils/appError");
 const config = require("../config/config");
 
@@ -8,14 +8,23 @@ class AuthService {
     /**
      * Register a new admin account
      */
-    async registerAdmin(name, phone, password) {
-        const existingAdmin = await Admin.findOne({ phone });
+    async registerAdmin(name, email, phone, password) {
+        if (!email) {
+            throw new AppError("Email is required for registration", 400);
+        }
+        const existingAdmin = await Admin.findOne({ $or: [{ phone }, { email }] });
         if (existingAdmin) {
-            throw new AppError("Admin already exists", 400);
+            throw new AppError("Admin with this phone or email already exists", 400);
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await Admin.create({ name, phone, password: hashedPassword });
+        await Admin.create({ 
+            name, 
+            email, 
+            phone, 
+            password: hashedPassword,
+            role: "ADMIN"
+        });
         
         return { message: "Admin registered successfully" };
     }
@@ -34,8 +43,35 @@ class AuthService {
             throw new AppError("Invalid credentials", 400);
         }
 
+        // Find active temporary permissions
+        const tempPermissions = await TemporaryPermission.find({
+            adminId: admin._id,
+            expiresAt: { $gt: new Date() }
+        });
+
+        const permissions = {
+            bookingEdit: admin.permissions?.bookingEdit || false,
+            bookingDelete: admin.permissions?.bookingDelete || false,
+            reviewAccess: admin.permissions?.reviewAccess || false
+        };
+
+        tempPermissions.forEach(tp => {
+            if (tp.permission && permissions[tp.permission] === false) {
+                permissions[tp.permission] = true;
+            }
+        });
+
+        // Update last login timestamp
+        admin.lastLogin = new Date();
+        await admin.save();
+
         const token = jwt.sign(
-            { phone, role: admin.role || "admin", name: admin.name },
+            { 
+                phone, 
+                role: (admin.role || "ADMIN").toUpperCase(), 
+                name: admin.name,
+                permissions: permissions
+            },
             config.jwt.secret,
             { expiresIn: "1d" }
         );

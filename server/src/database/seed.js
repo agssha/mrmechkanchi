@@ -12,12 +12,13 @@ const seedDatabase = async () => {
             { phone: "9566721519" },
             {
                 name: "AGS Master Admin",
+                email: "superadmin@mrmech.com",
                 password: hashedAdminPassword,
-                role: "super_admin"
+                role: "SUPER_ADMIN"
             },
             { upsert: true, new: true }
         );
-        logger.info("✅ Super Admin Seeded: Phone: 9566721519 | Pass: Aishu@123 | Role: super_admin");
+        logger.info("✅ Super Admin Seeded: Phone: 9566721519 | Pass: Aishu@123 | Role: SUPER_ADMIN");
 
         // Seed Standard Admin
         const hashedStandardAdminPassword = await bcrypt.hash("admin123", 10);
@@ -25,12 +26,13 @@ const seedDatabase = async () => {
             { phone: "7777777777" },
             {
                 name: "Standard Admin",
+                email: "admin@mrmech.com",
                 password: hashedStandardAdminPassword,
-                role: "admin"
+                role: "ADMIN"
             },
             { upsert: true, new: true }
         );
-        logger.info("✅ Standard Admin Seeded: Phone: 7777777777 | Pass: admin123 | Role: admin");
+        logger.info("✅ Standard Admin Seeded: Phone: 7777777777 | Pass: admin123 | Role: ADMIN");
 
         // 2. Seed Original Mechanic (compatibility with existing DB filter phone)
         const hashedOriginalMechPassword = await bcrypt.hash("ganesh@123", 10);
