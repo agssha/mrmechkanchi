@@ -6,6 +6,14 @@ Allow: /privacy policy
 Allow: /privacypolicy.html
 Allow: /terms of service
 Allow: /termsofservice.html
+Allow: /ac-service
+Allow: /ac_service.html
+Allow: /washing-machine-service
+Allow: /washing_machine_service.html
+Allow: /fridge-service
+Allow: /fridge_service.html
+Allow: /tailoring-machine-service
+Allow: /tailoring_machine_service.html
 Disallow: /admin/
 Disallow: /admin_login.html
 Disallow: /dashboard/
