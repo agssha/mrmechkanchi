@@ -196,7 +196,7 @@
                     </div>
                     <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-800 flex items-start gap-2">
                         <span class="material-symbols-outlined text-sm mt-0.5">info</span>
-                        <span>This panel monitors live metrics and staff statuses. Standard Admins are restricted to assigned bookings and customer registry.</span>
+                        <span>This panel monitors live metrics and staff statuses. Standard Admins are restricted to bookings and customer registry.</span>
                     </div>
                 </div>
             </div>
@@ -742,7 +742,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
         ADMIN: [
             { tab: "dashboard", label: "Dashboard", icon: "dashboard" },
-            { tab: "assigned-bookings", label: "Assigned Bookings", icon: "calendar_today" },
+            { tab: "bookings", label: "Booking", icon: "calendar_today" },
             { tab: "mechanics", label: "Mechanic Profile", icon: "engineering" },
             { tab: "customers", label: "Customers", icon: "groups" }
         ]
@@ -1022,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.goToBookingsTab = function() {
         const role = (currentUser.role || "admin").toUpperCase();
-        if (role === "SUPER_ADMIN") {
+        if (role === "SUPER_ADMIN" || role === "ADMIN") {
             switchTab("bookings");
         } else {
             switchTab("assigned-bookings");
