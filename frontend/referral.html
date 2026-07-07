@@ -290,7 +290,9 @@ let activeUser = null;
 let customerDetails = null;
 
 // Base API Configuration
-const API_BASE = window.location.origin + "/api";
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? window.location.origin + "/api"
+    : "https://mrmechkanchi-1.onrender.com/api";
 
 // Toggle mobile menu
 document.getElementById("mobileMenuBtn").addEventListener("click", () => {
