@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Referral & Rewards Program | MrKanchi</title>
+    
+    <!-- SEO Optimization -->
+    <meta name="description" content="Share MrKanchi appliance repair services with friends and get 25% OFF your next booking! Track your referrals and manage your reward coupons here." />
+    <meta name="robots" content="index, follow" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .gradient-bg {
+            background: radial-gradient(circle at 10% 20%, rgba(216, 241, 250, 0.46) 0%, rgba(248, 238, 251, 0.43) 90.1%);
+        }
+        .confetti-active {
+            animation: bounce 0.6s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col gradient-bg">
+
+<!-- Header Navigation -->
+<header class="fixed top-0 w-full z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md shadow-sm">
+    <div class="flex items-center justify-between px-6 h-16 w-full max-w-7xl mx-auto">
+        <a href="/" class="flex items-center gap-2 sm:gap-4 text-base sm:text-xl font-bold tracking-tight text-blue-900">
+            <img class="w-8 h-8 sm:w-[40px] sm:h-[40px] object-cover rounded-xl" src="./logo.png" alt="MrKanchi Logo">
+            <span>MrKanchi</span>
+        </a>
+        <nav class="hidden md:flex items-center space-x-6">
+            <a class="text-slate-600 hover:text-blue-600 font-medium text-sm transition" href="/">Home</a>
+            <a class="text-slate-600 hover:text-blue-600 font-medium text-sm transition" href="/booking">Book Service</a>
+            <a class="text-blue-700 font-bold border-b-2 border-blue-700 pb-1 text-sm" href="/referral.html">Referrals</a>
+            <div id="auth-status" class="text-sm font-medium text-slate-500"></div>
+        </nav>
+        <button id="mobileMenuBtn" class="md:hidden p-2 text-slate-600 hover:text-blue-600 focus:outline-none">
+            <span class="material-symbols-outlined text-2xl">menu</span>
+        </button>
+    </div>
+    <!-- Mobile Dropdown -->
+    <div id="mobileMenu" class="hidden border-t border-slate-100 bg-white px-6 py-4 flex flex-col space-y-3 shadow-md md:hidden">
+        <a class="text-slate-600 hover:text-blue-600 py-1 text-sm font-semibold" href="/">Home</a>
+        <a class="text-slate-600 hover:text-blue-600 py-1 text-sm font-semibold" href="/booking">Book Service</a>
+        <a class="text-blue-700 py-1 text-sm font-bold border-l-4 border-blue-700 pl-3" href="/referral.html">Referrals</a>
+        <div id="auth-status-mobile" class="pt-2 border-t border-slate-100"></div>
+    </div>
+</header>
+
+<!-- Auth Modal (Google OAuth Prompt) -->
+<div id="auth-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl space-y-6 border border-slate-100 text-center">
+        <div class="mx-auto w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-2">
+            <span class="material-symbols-outlined text-3xl">celebration</span>
+        </div>
+        <div>
+            <h3 class="text-2xl font-extrabold text-slate-900">Unlock Rewards</h3>
+            <p class="text-sm text-slate-500 mt-2">Log in with Google to share your referral code, track invites, and earn 25% OFF discount coupons!</p>
+        </div>
+        <button onclick="signInWithGoogle()" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3 px-4 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-3 shadow-sm active:scale-[0.98]">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+        </button>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<main id="main-content" class="flex-grow pt-24 pb-12 px-6 max-w-7xl mx-auto w-full hidden">
+    
+    <!-- Welcome Header & Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Refer & Earn Program</h1>
+            <p class="text-slate-500 text-sm mt-1">Get 25% OFF service charges (up to ₹100) for every 3 successful friend referrals!</p>
+        </div>
+        <!-- Enter referral code if referred by others -->
+        <div id="referred-input-section" class="bg-white px-4 py-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-2 max-w-md hidden">
+            <span class="material-symbols-outlined text-slate-400 text-lg">local_offer</span>
+            <div class="text-xs">
+                <span class="font-bold text-slate-600 block">Referred by a friend?</span>
+                <input id="inviter-code" type="text" placeholder="Enter referral code" class="mt-0.5 border border-slate-200 rounded px-2 py-0.5 text-xs font-semibold uppercase focus:ring-1 focus:ring-blue-500 focus:outline-none"/>
+            </div>
+            <button onclick="submitInviterCode()" class="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded hover:bg-blue-700 transition">Apply</button>
+        </div>
+    </div>
+
+    <!-- Referral Dashboard Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Side: Share Card & Progress -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Code sharing container -->
+            <div class="bg-gradient-to-br from-blue-700 to-indigo-800 text-white rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 opacity-10 translate-x-4 translate-y-4">
+                    <span class="material-symbols-outlined text-[180px]">campaign</span>
+                </div>
+                
+                <div class="z-10 relative space-y-6">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-600 text-blue-100 font-bold text-xs uppercase tracking-wider">
+                        Your Sharing Portal
+                    </span>
+                    <h2 class="text-2xl font-bold">Invite Friends, Earn Coupons!</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                        <!-- Referral Code -->
+                        <div class="bg-white/10 rounded-xl p-4 border border-white/10 backdrop-blur-sm flex flex-col justify-between">
+                            <span class="text-xs text-blue-200 font-medium">Your Unique Referral Code</span>
+                            <div class="flex items-center justify-between mt-2">
+                                <span id="ref-code" class="text-2xl font-extrabold tracking-widest font-mono text-white">------</span>
+                                <button onclick="copyText('ref-code', 'Code Copied!')" class="text-xs font-bold bg-white text-blue-800 py-1.5 px-3 rounded-lg hover:bg-blue-50 active:scale-95 transition flex items-center gap-1 shadow-sm">
+                                    <span class="material-symbols-outlined text-sm">content_copy</span> Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Referral Link -->
+                        <div class="bg-white/10 rounded-xl p-4 border border-white/10 backdrop-blur-sm flex flex-col justify-between">
+                            <span class="text-xs text-blue-200 font-medium">Your Direct Invitation Link</span>
+                            <div class="flex items-center justify-between mt-2">
+                                <span id="ref-link" class="text-sm font-semibold truncate max-w-[150px] text-blue-100">https://...</span>
+                                <button onclick="copyText('ref-link', 'Link Copied!')" class="text-xs font-bold bg-white text-blue-800 py-1.5 px-3 rounded-lg hover:bg-blue-50 active:scale-95 transition flex items-center gap-1 shadow-sm">
+                                    <span class="material-symbols-outlined text-sm">link</span> Copy Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Share on Social Media Icons -->
+                    <div class="pt-4 border-t border-white/10 flex flex-wrap items-center gap-3">
+                        <span class="text-xs font-semibold text-blue-200">Quick Share:</span>
+                        <!-- Whatsapp -->
+                        <button onclick="shareLink('whatsapp')" class="bg-[#25D366] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition">
+                            Share on WhatsApp
+                        </button>
+                        <!-- Twitter/X -->
+                        <button onclick="shareLink('twitter')" class="bg-black text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition">
+                            Share on X
+                        </button>
+                        <!-- Facebook -->
+                        <button onclick="shareLink('facebook')" class="bg-[#1877F2] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition">
+                            Facebook
+                        </button>
+                        <!-- Telegram -->
+                        <button onclick="shareLink('telegram')" class="bg-[#0088cc] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition">
+                            Telegram
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tracker Card -->
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-8 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-600">donut_large</span>
+                            Milestone Reward Tracker
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Track your achievements towards the next 25% OFF coupon</p>
+                    </div>
+                    <span id="milestone-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">0/3 Completed</span>
+                </div>
+
+                <!-- Custom Progress Bar -->
+                <div class="space-y-2">
+                    <div class="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1">
+                        <span>Start</span>
+                        <span>1 Referral</span>
+                        <span>2 Referrals</span>
+                        <span>Milestone (Earn 25% Coupon)</span>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100/50 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-blue-600 mt-0.5">info</span>
+                    <p id="milestone-tip" class="text-xs text-slate-600 leading-relaxed">
+                        Refer 3 friends who book their first repair with us to earn a 25% OFF coupon!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Referral History Table -->
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-8 space-y-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue-600">group</span>
+                    Invited Friends History
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase">
+                                <th class="pb-3 font-semibold">Friend</th>
+                                <th class="pb-3 font-semibold">Email</th>
+                                <th class="pb-3 font-semibold">Status</th>
+                                <th class="pb-3 font-semibold">Joined Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referred-friends-body">
+                            <tr>
+                                <td colspan="4" class="py-6 text-center text-slate-400 text-xs italic">No invites recorded yet. Share your code to get started! 🚀</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Side: Coupons & Available rewards Wallet -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 p-8 space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-600">confirmation_number</span>
+                        Your Reward Coupons
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Click coupon code to copy and apply at checkout</p>
+                </div>
+
+                <div id="coupons-wallet-container" class="space-y-4 max-h-[480px] overflow-y-auto pr-1">
+                    <!-- Placeholder of no coupons -->
+                    <div class="py-12 border border-dashed border-slate-200 rounded-xl flex flex-col items-center text-center p-4">
+                        <span class="material-symbols-outlined text-slate-300 text-5xl mb-2">empty_dashboard</span>
+                        <h4 class="text-sm font-bold text-slate-600">No coupons yet</h4>
+                        <p class="text-[11px] text-slate-400 mt-1 max-w-[180px]">Your earned reward coupons will appear here in your wallet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program rules details -->
+            <div class="bg-slate-100/50 rounded-2xl border border-slate-200/50 p-6 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700">Program Guidelines</h4>
+                <ul class="space-y-2 text-xs text-slate-500 leading-relaxed list-disc pl-4">
+                    <li>The referred person must be a <strong>first-time customer</strong> without existing repair accounts.</li>
+                    <li>A referral is counted only when the friend's booking is <strong>Completed and Paid</strong>.</li>
+                    <li>Self-referrals, duplicate profiles, or matching IP/device sharing will invalidate rewards automatically.</li>
+                    <li>Discount coupons apply <strong>only to the service charge</strong> (not parts or products).</li>
+                    <li>Each coupon is for one-time use only and expires in 90 days.</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-white mt-12 border-t border-slate-800 py-8">
+    <div class="max-w-7xl mx-auto px-6 text-center text-xs text-slate-400 space-y-2">
+        <p>&copy; 2026 MrKanchi Doorstep Services. Managed by AGS Group.</p>
+        <p>Reliable Home AC, Washing Machine, Fridge & Tailoring Machine Repairs in Kanchipuram.</p>
+    </div>
+</footer>
+
+<script>
+// Supabase Setup
+const supabaseUrl = 'https://vhdngekmhxldkyvrcblz.supabase.co';
+const supabaseAnonKey = 'sb_publishable_56HVVk9DzW8WDAT7LjzzTg_mJ34xQhL';
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+let activeUser = null;
+let customerDetails = null;
+
+// Base API Configuration
+const API_BASE = window.location.origin + "/api";
+
+// Toggle mobile menu
+document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+    const menu = document.getElementById("mobileMenu");
+    menu.classList.toggle("hidden");
+});
+
+// Google Authentication
+async function signInWithGoogle() {
+    try {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: window.location.origin + "/referral.html"
+            }
+        });
+        if (error) alert(error.message);
+    } catch (err) {
+        console.error(err);
+        alert("Authentication failed.");
+    }
+}
+
+// Signout
+async function signOut() {
+    try {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Check current user state
+document.addEventListener("DOMContentLoaded", async () => {
+    const authModal = document.getElementById("auth-modal");
+    const mainContent = document.getElementById("main-content");
+    let currentSyncUserId = null;
+
+    async function handleSession(session) {
+        if (!session) {
+            activeUser = null;
+            currentSyncUserId = null;
+            authModal.classList.remove("hidden");
+            mainContent.classList.add("hidden");
+            return;
+        }
+
+        activeUser = session.user;
+        authModal.classList.add("hidden");
+        mainContent.classList.remove("hidden");
+
+        if (currentSyncUserId === activeUser.id) {
+            return;
+        }
+        currentSyncUserId = activeUser.id;
+
+        // Sync customer profile with backend
+        await syncCustomerProfile(activeUser);
+
+        // Populate details
+        await loadReferralDetails();
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    handleSession(session);
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        handleSession(session);
+    });
+});
+
+// Sync Profile with API
+async function syncCustomerProfile(user) {
+    try {
+        const payload = {
+            userId: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || "Valued Customer",
+            phone: user.phone || ""
+        };
+
+        const res = await fetch(`${API_BASE}/customer/sync-profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            customerDetails = data.customer;
+            // Set header login status
+            const statusHtml = `
+                <div class="flex items-center gap-3">
+                    <span class="text-slate-600 text-xs sm:text-sm font-semibold">Hi, ${customerDetails.name.split(" ")[0]}</span>
+                    <button onclick="signOut()" class="text-[10px] sm:text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-2.5 py-1.5 rounded-lg transition">Logout</button>
+                </div>
+            `;
+            document.getElementById("auth-status").innerHTML = statusHtml;
+            document.getElementById("auth-status-mobile").innerHTML = statusHtml;
+
+            // Show referred input section if the customer is not referred by anyone yet
+            if (!customerDetails.referredByCode) {
+                document.getElementById("referred-input-section").classList.remove("hidden");
+            } else {
+                document.getElementById("referred-input-section").classList.add("hidden");
+            }
+        }
+    } catch (err) {
+        console.error("Sync profile error:", err);
+    }
+}
+
+// Load Referral Statistics & Wallets
+async function loadReferralDetails() {
+    if (!activeUser) return;
+    try {
+        const res = await fetch(`${API_BASE}/customer/referral-details/${activeUser.email}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+            console.error("Failed to load details:", data.message);
+            return;
+        }
+
+        const details = data;
+
+        // Set Code & Link
+        document.getElementById("ref-code").innerText = details.referralCode;
+        document.getElementById("ref-link").innerText = details.referralLink;
+
+        // Set Progress Indicator & Progress Bar width
+        document.getElementById("milestone-badge").innerText = details.progressIndicator + " Completed";
+        document.getElementById("progress-bar").style.width = details.progressPercentage + "%";
+
+        // Milestone tip customization
+        const progressCount = parseInt(details.progressIndicator.split("/")[0]);
+        const needed = details.targetNeeded - progressCount;
+        if (needed === 0) {
+            document.getElementById("milestone-tip").innerHTML = `🎉 <strong>Milestone achieved!</strong> We have generated a new coupon code for you below! Your count has been reset towards the next milestone.`;
+        } else {
+            document.getElementById("milestone-tip").innerHTML = `📢 Invite <strong>${needed}</strong> more friend(s) to complete their first paid service to receive a new 25% OFF coupon!`;
+        }
+
+        // Render Invited Friends History
+        const friendsBody = document.getElementById("referred-friends-body");
+        if (details.referredFriends && details.referredFriends.length > 0) {
+            friendsBody.innerHTML = details.referredFriends.map(friend => {
+                let badgeClass = "bg-amber-50 text-amber-700 border-amber-100";
+                if (friend.status === "Completed") badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                else if (friend.status === "Rejected") badgeClass = "bg-rose-50 text-rose-700 border-rose-100";
+
+                const dateStr = new Date(friend.createdAt).toLocaleDateString();
+
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition">
+                        <td class="py-3.5 font-semibold text-slate-800">${friend.name}</td>
+                        <td class="py-3.5 text-slate-500 font-mono text-xs">${friend.email}</td>
+                        <td class="py-3.5">
+                            <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
+                                ${friend.status}
+                            </span>
+                        </td>
+                        <td class="py-3.5 text-slate-400 text-xs">${dateStr}</td>
+                    </tr>
+                `;
+            }).join("");
+        } else {
+            friendsBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="py-8 text-center text-slate-400 text-xs italic">No invites recorded yet. Share your code to get started! 🚀</td>
+                </tr>
+            `;
+        }
+
+        // Render Coupons Wallet
+        const walletContainer = document.getElementById("coupons-wallet-container");
+        if (details.coupons && details.coupons.length > 0) {
+            walletContainer.innerHTML = details.coupons.map(coupon => {
+                let colorClass = "from-emerald-500 to-teal-600 border-emerald-200 text-white";
+                let statusBadge = `<span class="bg-emerald-100/20 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-white/20 uppercase">Active</span>`;
+                let clickAction = `onclick="copyTextValue('${coupon.code}', 'Coupon Copied!')"`;
+                let shadowClass = "shadow-lg cursor-pointer hover:translate-y-[-2px] hover:shadow-xl";
+
+                if (coupon.status === "Redeemed") {
+                    colorClass = "from-slate-300 to-slate-400 border-slate-200 text-slate-600";
+                    statusBadge = `<span class="bg-slate-200/50 text-slate-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-slate-300/30 uppercase">Redeemed</span>`;
+                    clickAction = "";
+                    shadowClass = "opacity-70 cursor-not-allowed";
+                } else if (coupon.status === "Expired") {
+                    colorClass = "from-rose-400 to-rose-500 border-rose-200 text-rose-100";
+                    statusBadge = `<span class="bg-rose-200/20 text-rose-100 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-rose-300/30 uppercase">Expired</span>`;
+                    clickAction = "";
+                    shadowClass = "opacity-60 cursor-not-allowed";
+                }
+
+                const expDateStr = new Date(coupon.expiryDate).toLocaleDateString();
+
+                return `
+                    <div ${clickAction} class="bg-gradient-to-br ${colorClass} rounded-xl p-5 border relative overflow-hidden transition-all duration-300 ${shadowClass} flex items-center justify-between gap-4">
+                        <div class="space-y-1 z-10">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs uppercase font-extrabold tracking-wider opacity-85">Reward Coupon</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-3xl font-black font-mono tracking-wider">${coupon.code}</div>
+                            <div class="text-[11px] font-medium opacity-90">
+                                25% OFF (Max ₹${coupon.maxDiscount}) | Expires: ${expDateStr}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center bg-white/25 rounded-lg p-2 text-center border border-white/20 min-w-[70px]">
+                            <span class="text-[18px] font-black leading-none">${coupon.discountPercentage}%</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider mt-0.5 leading-none">OFF</span>
+                        </div>
+                        <!-- Ticket serration decorative borders -->
+                        <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 border-r border-slate-200 z-20"></div>
+                        <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 border-l border-slate-200 z-20"></div>
+                    </div>
+                `;
+            }).join("");
+        } else {
+            walletContainer.innerHTML = `
+                <div class="py-12 border border-dashed border-slate-200 rounded-xl flex flex-col items-center text-center p-4">
+                    <span class="material-symbols-outlined text-slate-300 text-5xl mb-2">confirmation_number</span>
+                    <h4 class="text-sm font-bold text-slate-600">No coupons yet</h4>
+                    <p class="text-[11px] text-slate-400 mt-1 max-w-[180px]">Complete your first 3 referrals to earn your first 25% discount reward!</p>
+                </div>
+            `;
+        }
+
+    } catch (err) {
+        console.error("Load details error:", err);
+    }
+}
+
+// Copy Text utility
+async function copyText(elementId, alertMsg) {
+    const text = document.getElementById(elementId).innerText;
+    try {
+        await navigator.clipboard.writeText(text);
+        alert(alertMsg || "Copied to Clipboard! ✅");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Copy Text Direct value
+async function copyTextValue(value, alertMsg) {
+    try {
+        await navigator.clipboard.writeText(value);
+        alert(alertMsg || "Copied to Clipboard! ✅");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Social Media Links Builder
+function shareLink(platform) {
+    const refCode = document.getElementById("ref-code").innerText;
+    if (refCode === "------") return;
+    const shareText = `Use my referral code ${refCode} on MrKanchi to get a professional doorstep appliance service with 25% OFF reward potential! Check it out:`;
+    const shareUrl = `https://www.mrkanchi.in/booking?ref=${refCode}`;
+
+    let url = "";
+    switch (platform) {
+        case "whatsapp":
+            url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
+            break;
+        case "twitter":
+            url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+            break;
+        case "facebook":
+            url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            break;
+        case "telegram":
+            url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+            break;
+    }
+
+    if (url) {
+        window.open(url, "_blank");
+    }
+}
+
+// Submit inviter's referral code
+async function submitInviterCode() {
+    const inviterCode = document.getElementById("inviter-code").value.trim();
+    if (!inviterCode) {
+        alert("Please enter a valid referral code. ❌");
+        return;
+    }
+
+    try {
+        const payload = {
+            customerEmail: activeUser.email,
+            referralCode: inviterCode
+        };
+
+        const res = await fetch(`${API_BASE}/customer/submit-referral`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+            alert(data.message || "Failed to submit referral code. ❌");
+            return;
+        }
+
+        alert("Referral code applied successfully! 🎉 Your first booking completion will reward your referrer.");
+        location.reload();
+
+    } catch (err) {
+        console.error(err);
+        alert("Network connection error. ❌");
+    }
+}
+</script>
+
+</body>
+</html>

@@ -422,6 +422,116 @@
             <div id="reviews-feed-container" class="space-y-4 max-w-3xl">
                 </div>
         </div>
+
+        <!-- Referrals and Rewards Tab Layer -->
+        <div id="tab-content-referrals" class="tab-layer hidden space-y-6">
+            <!-- Referral Config Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Configurations Panel -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined">settings_suggest</span>
+                        Program Configuration
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Target Completed Referrals</label>
+                            <input type="number" id="cfg-target" class="w-full border-slate-200 rounded-lg focus:ring-blue-500" min="1" value="3">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Discount Reward Percentage (%)</label>
+                            <input type="number" id="cfg-percent" class="w-full border-slate-200 rounded-lg focus:ring-blue-500" min="1" max="100" value="25">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Coupon Expiry Duration (Days)</label>
+                            <input type="number" id="cfg-expiry" class="w-full border-slate-200 rounded-lg focus:ring-blue-500" min="1" value="90">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Maximum Discount Amount (₹)</label>
+                            <input type="number" id="cfg-max" class="w-full border-slate-200 rounded-lg focus:ring-blue-500" min="1" value="500">
+                        </div>
+                        <button onclick="updateReferralConfig(this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition text-xs shadow-sm">
+                            Save Configurations
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats summary columns -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined">analytics</span>
+                        Referral Statistics Overview
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                        <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                            <span class="text-slate-400 text-xs font-bold uppercase">Total Logged Referrals</span>
+                            <h4 id="stat-total-ref" class="text-2xl font-black text-slate-800 mt-1">0</h4>
+                        </div>
+                        <div class="p-4 bg-green-50 border border-green-100 rounded-xl">
+                            <span class="text-green-600 text-xs font-bold uppercase">Successful Invites</span>
+                            <h4 id="stat-success-ref" class="text-2xl font-black text-green-700 mt-1">0</h4>
+                        </div>
+                        <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                            <span class="text-blue-600 text-xs font-bold uppercase">Coupons Generated</span>
+                            <h4 id="stat-coupons-gen" class="text-2xl font-black text-blue-700 mt-1">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Activities Table -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined">group</span>
+                    Referral Invitation Activities
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-400 font-bold uppercase">
+                                <th class="pb-3">Referrer</th>
+                                <th class="pb-3">Referred Customer</th>
+                                <th class="pb-3">Status</th>
+                                <th class="pb-3">Joined Date</th>
+                                <th class="pb-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-referrals-body">
+                            <tr>
+                                <td colspan="5" class="py-6 text-center text-slate-400 italic">No referral activity logged.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Generated Coupons Table -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined">confirmation_number</span>
+                    Generated Reward Coupons
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-400 font-bold uppercase">
+                                <th class="pb-3">Code</th>
+                                <th class="pb-3">Owner</th>
+                                <th class="pb-3">Discount</th>
+                                <th class="pb-3">Max Discount</th>
+                                <th class="pb-3">Expiry Date</th>
+                                <th class="pb-3">Used</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-coupons-body">
+                            <tr>
+                                <td colspan="6" class="py-6 text-center text-slate-400 italic">No coupons generated yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 </div>
 
@@ -738,13 +848,15 @@ document.addEventListener("DOMContentLoaded", () => {
             { tab: "admins", label: "Admin Management", icon: "shield_person" },
             { tab: "logs", label: "Activity Logs", icon: "history" },
             { tab: "mechanics", label: "Mechanic Profile", icon: "engineering" },
+            { tab: "referrals", label: "Referrals & Rewards", icon: "card_giftcard" },
             { tab: "settings", label: "Settings", icon: "settings" }
         ],
         ADMIN: [
             { tab: "dashboard", label: "Dashboard", icon: "dashboard" },
             { tab: "bookings", label: "Booking", icon: "calendar_today" },
             { tab: "mechanics", label: "Mechanic Profile", icon: "engineering" },
-            { tab: "customers", label: "Customers", icon: "groups" }
+            { tab: "customers", label: "Customers", icon: "groups" },
+            { tab: "referrals", label: "Referrals & Rewards", icon: "card_giftcard" }
         ]
     };
 
@@ -883,6 +995,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetTab === "reviews") loadReviews();
         if (targetTab === "admins") loadAdmins();
         if (targetTab === "logs") loadActivityLogs();
+        if (targetTab === "referrals") {
+            loadReferralConfig();
+            loadReferralActivities();
+        }
     };
 
 
@@ -1886,6 +2002,185 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadBookings();
         setInterval(loadBookings, 8000);
     }
+
+    async function loadReferralConfig() {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/referral-config`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.config) {
+                const config = data.config;
+                document.getElementById("cfg-target").value = config.referralTarget || 3;
+                document.getElementById("cfg-percent").value = config.rewardPercentage || 25;
+                document.getElementById("cfg-expiry").value = config.couponExpiryDays || 90;
+                document.getElementById("cfg-max").value = config.maxDiscountAmount || 500;
+            }
+        } catch (err) {
+            console.error("Error loading referral config:", err);
+        }
+    }
+
+    window.updateReferralConfig = async function(btn) {
+        setButtonLoading(btn, true, "Saving...");
+        try {
+            const referralTarget = document.getElementById("cfg-target").value;
+            const rewardPercentage = document.getElementById("cfg-percent").value;
+            const couponExpiryDays = document.getElementById("cfg-expiry").value;
+            const maxDiscountAmount = document.getElementById("cfg-max").value;
+
+            const res = await fetch(`${API_BASE}/api/admin/referral-config`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    referralTarget,
+                    rewardPercentage,
+                    couponExpiryDays,
+                    maxDiscountAmount
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("Referral configuration updated successfully! ✅");
+            } else {
+                alert(data.message || "Failed to update config.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Connection error.");
+        } finally {
+            setButtonLoading(btn, false);
+        }
+    };
+
+    async function loadReferralActivities() {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/referral-activities`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) return;
+
+            const { referrals, coupons, rewardLogs } = data;
+
+            // Compute statistics
+            document.getElementById("stat-total-ref").innerText = referrals.length;
+            document.getElementById("stat-success-ref").innerText = referrals.filter(r => r.status === "Completed").length;
+            document.getElementById("stat-coupons-gen").innerText = coupons.length;
+
+            // Render Referral Activities Table
+            const referralsBody = document.getElementById("admin-referrals-body");
+            if (referrals && referrals.length > 0) {
+                referralsBody.innerHTML = referrals.map(ref => {
+                    const referrerName = ref.referrerId ? `${ref.referrerId.name} (${ref.referrerId.email})` : "N/A";
+                    const referredName = ref.referredId ? `${ref.referredId.name} (${ref.referredId.email})` : "N/A";
+                    
+                    let badgeClass = "bg-amber-50 text-amber-700 border-amber-100";
+                    if (ref.status === "Completed") badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                    else if (ref.status === "Rejected") badgeClass = "bg-rose-50 text-rose-700 border-rose-100";
+
+                    let actionHtml = "";
+                    if (ref.status === "Pending") {
+                        actionHtml = `
+                            <div class="flex gap-2">
+                                <button onclick="resolveReferral('${ref._id}', 'approve', this)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-2.5 rounded text-[10px] transition">Approve</button>
+                                <button onclick="resolveReferral('${ref._id}', 'reject', this)" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-1 px-2.5 rounded text-[10px] transition">Reject</button>
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `<span class="text-slate-400 font-medium">${ref.adminActionBy ? 'By ' + ref.adminActionBy : 'Auto'}</span>`;
+                    }
+
+                    const dateStr = new Date(ref.createdAt).toLocaleDateString();
+
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition text-slate-700">
+                            <td class="py-3 font-semibold text-slate-800">${referrerName}</td>
+                            <td class="py-3 text-slate-600">${referredName}</td>
+                            <td class="py-3">
+                                <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
+                                    ${ref.status}
+                                </span>
+                                ${ref.rejectionReason ? `<p class="text-[9px] text-rose-500 mt-0.5 font-bold">${ref.rejectionReason}</p>` : ""}
+                            </td>
+                            <td class="py-3 text-slate-400">${dateStr}</td>
+                            <td class="py-3">${actionHtml}</td>
+                        </tr>
+                    `;
+                }).join("");
+            } else {
+                referralsBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-slate-400 italic">No referral activity logged.</td>
+                    </tr>
+                `;
+            }
+
+            // Render Generated Coupons Table
+            const couponsBody = document.getElementById("admin-coupons-body");
+            if (coupons && coupons.length > 0) {
+                couponsBody.innerHTML = coupons.map(c => {
+                    const ownerName = c.customerId ? `${c.customerId.name} (${c.customerId.email})` : "N/A";
+                    const isUsedText = c.isUsed ? '<span class="text-slate-500 font-bold uppercase">Yes</span>' : '<span class="text-emerald-600 font-bold uppercase">No</span>';
+                    const expDateStr = new Date(c.expiryDate).toLocaleDateString();
+
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition text-slate-700">
+                            <td class="py-3 font-bold font-mono text-slate-800">${c.code}</td>
+                            <td class="py-3 text-slate-600">${ownerName}</td>
+                            <td class="py-3 font-semibold text-slate-800">${c.discountPercentage}%</td>
+                            <td class="py-3 text-slate-700">₹${c.maxDiscount}</td>
+                            <td class="py-3 text-slate-400">${expDateStr}</td>
+                            <td class="py-3">${isUsedText}</td>
+                        </tr>
+                    `;
+                }).join("");
+            } else {
+                couponsBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-6 text-center text-slate-400 italic">No coupons generated yet.</td>
+                    </tr>
+                `;
+            }
+
+        } catch (err) {
+            console.error("Error loading activities:", err);
+        }
+    }
+
+    window.resolveReferral = async function(referralId, action, btn) {
+        let rejectionReason = "";
+        if (action === "reject") {
+            rejectionReason = prompt("Please enter the reason for rejection:");
+            if (rejectionReason === null) return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/referrals/${referralId}/action`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ action, rejectionReason })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(`Referral successfully marked as ${action === 'approve' ? 'Completed' : 'Rejected'}! 🎉`);
+                await loadReferralActivities();
+            } else {
+                alert(data.message || "Failed to resolve referral.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error sending request.");
+        }
+    };
 
 
     init();

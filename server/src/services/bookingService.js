@@ -1,6 +1,7 @@
 const { Booking, ActivityLog } = require("../models");
 const STATUS = require("../constants/status");
 const AppError = require("../utils/appError");
+const logger = require("../utils/logger");
 
 class BookingService {
     /**
@@ -22,6 +23,14 @@ class BookingService {
             throw new AppError("A matching booking was already submitted successfully. Please check your active bookings.", 400);
         }
 
+        let validatedCouponCode = null;
+        if (data.couponCode) {
+            const referralService = require("./referralService");
+            // Validate the coupon with charge 0 to check if active/valid/owned
+            await referralService.validateCoupon(data.couponCode, userEmail, 0);
+            validatedCouponCode = data.couponCode.toUpperCase().trim();
+        }
+
         const newBooking = await Booking.create({
             name,
             mobileNumber,
@@ -30,6 +39,7 @@ class BookingService {
             serviceAddress,
             serviceType,
             problemDescription,
+            couponCode: validatedCouponCode,
             status: STATUS.PENDING,
             createdAt: new Date()
         });
@@ -98,8 +108,24 @@ class BookingService {
             throw new AppError("Unauthorized access verification failed.", 403);
         }
 
-        booking.estimatedPrice = Number(price);
+        const parsedPrice = Number(price);
+        booking.estimatedPrice = parsedPrice;
         booking.status = STATUS.PRICE_SET;
+
+        if (booking.couponCode) {
+            try {
+                const referralService = require("./referralService");
+                const validation = await referralService.validateCoupon(booking.couponCode, booking.userEmail, parsedPrice);
+                booking.discountAmount = validation.discountAmount;
+                booking.finalPrice = validation.finalServiceCharge;
+            } catch (err) {
+                logger.warn(`⚠️ Coupon validation failed during price setting for booking ${bookingId}: ${err.message}`);
+                booking.discountAmount = 0;
+                booking.finalPrice = parsedPrice;
+            }
+        } else {
+            booking.finalPrice = parsedPrice;
+        }
 
         await booking.save();
         return booking;
@@ -124,6 +150,10 @@ class BookingService {
         booking.updatedAt = new Date();
 
         await booking.save();
+
+        await this._processCouponRedemption(booking);
+        await this._processReferralCompletion(booking);
+
         return booking;
     }
 
@@ -143,6 +173,10 @@ class BookingService {
         booking.updatedAt = new Date();
 
         await booking.save();
+
+        await this._processCouponRedemption(booking);
+        await this._processReferralCompletion(booking);
+
         return booking;
     }
 
@@ -172,6 +206,11 @@ class BookingService {
 
         if (!booking) {
             throw new AppError("Booking entry error", 404);
+        }
+
+        if (booking.status === STATUS.COMPLETED && booking.paymentStatus === "Paid") {
+            await this._processCouponRedemption(booking);
+            await this._processReferralCompletion(booking);
         }
 
         return booking;
@@ -218,6 +257,11 @@ class BookingService {
 
         const newData = booking.toObject();
 
+        if (booking.status === STATUS.COMPLETED && booking.paymentStatus === "Paid") {
+            await this._processCouponRedemption(booking);
+            await this._processReferralCompletion(booking);
+        }
+
         // Create Activity Log
         await ActivityLog.create({
             adminId: adminUser.phone,
@@ -261,6 +305,44 @@ class BookingService {
         });
 
         return { message: "Booking removed and deletion logged successfully" };
+    }
+
+    async _processCouponRedemption(booking) {
+        if (!booking.couponCode) return;
+        try {
+            const { Coupon, CouponUsage, Customer } = require("../models");
+            const coupon = await Coupon.findOne({ code: booking.couponCode.toUpperCase().trim() });
+            if (coupon && !coupon.isUsed) {
+                coupon.isUsed = true;
+                await coupon.save();
+
+                const customer = await Customer.findOne({ email: booking.userEmail.toLowerCase() });
+                await CouponUsage.create({
+                    couponId: coupon._id,
+                    bookingId: booking._id,
+                    customerId: customer ? customer._id : null,
+                    discountAmount: booking.discountAmount,
+                    serviceChargeBeforeDiscount: booking.estimatedPrice
+                });
+                logger.info(`🎫 Coupon redeemed: ${booking.couponCode} applied on booking ${booking._id}`);
+            }
+        } catch (err) {
+            logger.error(`❌ Coupon redemption error for booking ${booking._id}: ${err.message}`);
+        }
+    }
+
+    async _processReferralCompletion(booking) {
+        try {
+            const { Customer } = require("../models");
+            const customer = await Customer.findOne({ email: booking.userEmail.toLowerCase() });
+            if (customer && customer.referredByCustomer) {
+                const referralService = require("./referralService");
+                const price = booking.finalPrice || booking.estimatedPrice || 0;
+                await referralService.validateAndCompleteReferral(customer._id, booking._id, price);
+            }
+        } catch (err) {
+            logger.error(`❌ Referral validation error for booking ${booking._id}: ${err.message}`);
+        }
     }
 }
 

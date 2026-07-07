@@ -1,6 +1,6 @@
-const Booking = require("../models/Booking");
-const TemporaryPermission = require("../models/TemporaryPermission");
+const { Booking, TemporaryPermission, Coupon, RewardLog } = require("../models");
 const bookingService = require("./bookingService");
+const emailService = require("./emailService");
 const logger = require("../utils/logger");
 
 class SchedulerService {
@@ -15,14 +15,16 @@ class SchedulerService {
     start() {
         logger.info("⏰ Scheduler Service: Starting background workers...");
         
-        // Run cleanup job immediately on bootstrap
+        // Run cleanup jobs immediately on bootstrap
         this.cleanupOldCompletedBookings();
         this.cleanupExpiredTemporaryPermissions();
+        this.checkAndNotifyCouponExpirations();
 
-        // Run cleanup job every 24 hours
+        // Run cleanup and expiration checks every 24 hours
         const ONEDAY_MS = 24 * 60 * 60 * 1000;
         this.cleanupIntervalId = setInterval(() => {
             this.cleanupOldCompletedBookings();
+            this.checkAndNotifyCouponExpirations();
         }, ONEDAY_MS);
 
         // Run temporary permissions cleanup every 1 minute
@@ -101,6 +103,60 @@ class SchedulerService {
             }
         } catch (err) {
             logger.error(`❌ Scheduler Service Exception during temporary permissions cleanup: ${err.message}`);
+        }
+    }
+
+    /**
+     * Check for coupons expiring within 7 days and email customer reminders
+     */
+    async checkAndNotifyCouponExpirations() {
+        logger.info("🧹 Scheduler Service: Checking for expiring coupons...");
+        try {
+            const now = new Date();
+            const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+            // Find coupons expiring in the next 7 days that haven't been used and haven't had a notification sent
+            const expiringCoupons = await Coupon.find({
+                isUsed: false,
+                expiryDate: { $gt: now, $lt: sevenDaysFromNow },
+                notificationSent: false
+            }).populate("customerId");
+
+            if (expiringCoupons.length === 0) {
+                logger.info("🧹 Scheduler Service: No expiring coupons needing notifications.");
+                return;
+            }
+
+            logger.info(`🧹 Scheduler Service: Found ${expiringCoupons.length} expiring coupons to notify.`);
+
+            for (const coupon of expiringCoupons) {
+                const customer = coupon.customerId;
+                if (!customer) continue;
+
+                try {
+                    const daysRemaining = Math.max(1, Math.round((new Date(coupon.expiryDate) - now) / (24 * 60 * 60 * 1000)));
+                    
+                    // Send notification email
+                    await emailService.sendCouponExpiryReminderEmail(customer.email, customer.name, coupon.code, coupon.expiryDate, daysRemaining);
+
+                    // Mark as sent
+                    coupon.notificationSent = true;
+                    await coupon.save();
+
+                    // Log reward activity
+                    await RewardLog.create({
+                        customerId: customer._id,
+                        type: "COUPON_EXPIRED", // We can use coupon expired category or custom one
+                        details: `Sent expiry reminder email for coupon ${coupon.code}. Expiry in ${daysRemaining} days.`
+                    });
+
+                    logger.info(`✅ Scheduler Service: Sent expiry warning to ${customer.email} for coupon ${coupon.code}`);
+                } catch (couponErr) {
+                    logger.error(`❌ Scheduler Service: Failed to process warning for coupon ${coupon.code}: ${couponErr.message}`);
+                }
+            }
+        } catch (err) {
+            logger.error(`❌ Scheduler Service Exception during coupon expiration checks: ${err.message}`);
         }
     }
 }

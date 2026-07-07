@@ -231,6 +231,113 @@ class EmailService {
             logger.info(`📢 [Email Simulation] Deletion audit payload for ${recipient}:\n` + JSON.stringify(bookingData, null, 2));
         }
     }
+
+    async sendReferralCompletedEmail(referrerEmail, referrerName, referredName) {
+        const subject = `🎉 Referral Validated! ${referredName} completed their service`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px;">
+                <h2 style="color: #3182ce; border-bottom: 2px solid #3182ce; padding-bottom: 10px;">Referral Success!</h2>
+                <p>Hello ${referrerName},</p>
+                <p>Great news! Your friend <strong>${referredName}</strong> has completed and paid for their first service booking with Mr. Mech Kanchi.</p>
+                <p>This referral has been successfully verified. You are now one step closer to earning your next 25% OFF discount coupon reward!</p>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="https://www.mrkanchi.in/referral" style="background-color: #3182ce; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Referral Progress</a>
+                </div>
+                <div style="margin-top: 20px; font-size: 11px; color: #a0aec0; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                    This is an automated notification from the Mr. Mech Kanchi Platform.
+                </div>
+            </div>
+        `;
+
+        await this._sendEmail(referrerEmail, subject, html, "Referral Completed Notification");
+    }
+
+    async sendCouponGeneratedEmail(referrerEmail, referrerName, couponCode, discountPercentage, maxDiscount, expiryDate) {
+        const subject = `🎁 Reward Earned! Your 25% OFF Coupon is Ready`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px;">
+                <h2 style="color: #48bb78; border-bottom: 2px solid #48bb78; padding-bottom: 10px;">Congratulations, Reward Achieved!</h2>
+                <p>Hello ${referrerName},</p>
+                <p>You have successfully completed a milestone in our Referral Program! As a reward, we have generated a unique discount coupon code just for you:</p>
+                
+                <div style="background-color: #f0fff4; border: 1px dashed #48bb78; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                    <span style="font-size: 12px; color: #2f855a; font-weight: bold; display: block; margin-bottom: 5px;">COUPON CODE</span>
+                    <span style="font-size: 24px; color: #276749; font-weight: bold; letter-spacing: 2px; font-family: monospace;">${couponCode}</span>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">Discount</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${discountPercentage}% OFF Service Charge</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">Maximum Cap</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">₹${maxDiscount}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">Validity</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">90 Days (Expires ${new Date(expiryDate).toLocaleDateString()})</td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 15px; font-size: 12px; color: #718096;">*Note: This coupon is one-time use only and applies only to the service charge (excluding spare parts or products).</p>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="https://www.mrkanchi.in/booking" style="background-color: #48bb78; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Book a Service Now</a>
+                </div>
+                <div style="margin-top: 20px; font-size: 11px; color: #a0aec0; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                    This is an automated notification from the Mr. Mech Kanchi Platform.
+                </div>
+            </div>
+        `;
+
+        await this._sendEmail(referrerEmail, subject, html, "Coupon Generated Notification");
+    }
+
+    async sendCouponExpiryReminderEmail(recipientEmail, customerName, couponCode, expiryDate, daysRemaining) {
+        const subject = `⚠️ Warning: Your Coupon ${couponCode} Expires Soon!`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px;">
+                <h2 style="color: #dd6b20; border-bottom: 2px solid #dd6b20; padding-bottom: 10px;">Coupon Expiry Warning</h2>
+                <p>Hello ${customerName},</p>
+                <p>This is a friendly reminder that your 25% OFF reward coupon code <strong>${couponCode}</strong> is expiring in <strong>${daysRemaining} days</strong> on ${new Date(expiryDate).toLocaleDateString()}.</p>
+                <p>Don't let your hard-earned rewards go to waste! Book your appliance service now to claim your discount.</p>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="https://www.mrkanchi.in/booking" style="background-color: #dd6b20; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Redeem Coupon Now</a>
+                </div>
+                <div style="margin-top: 20px; font-size: 11px; color: #a0aec0; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                    This is an automated notification from the Mr. Mech Kanchi Platform.
+                </div>
+            </div>
+        `;
+
+        await this._sendEmail(recipientEmail, subject, html, "Coupon Expiry Reminder");
+    }
+
+    async _sendEmail(recipient, subject, html, logContext) {
+        const mailOptions = {
+            from: process.env.SMTP_USER || "mr.mechkanchi.alert@gmail.com",
+            to: recipient,
+            subject: subject,
+            html: html
+        };
+
+        const transporter = await this.getTransporter();
+
+        if (transporter) {
+            try {
+                await transporter.sendMail(mailOptions);
+                logger.info(`📧 ${logContext} sent to ${recipient}`);
+            } catch (error) {
+                logger.error(`❌ Failed to send ${logContext} to ${recipient}. Error: ${error.message}`);
+                this.transporter = null;
+                this.initPromise = null;
+                throw error;
+            }
+        } else {
+            logger.info(`📢 [Email Simulation] ${logContext} payload for ${recipient} (Subject: ${subject})`);
+        }
+    }
 }
 
 module.exports = new EmailService();

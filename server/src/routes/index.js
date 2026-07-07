@@ -5,6 +5,7 @@ const mechanicRoutes = require("./mechanicRoutes");
 const customerRoutes = require("./customerRoutes");
 const paymentRoutes = require("./paymentRoutes");
 const superAdminRoutes = require("./superAdminRoutes");
+const referralRoutes = require("./referralRoutes");
 const auth = require("../middlewares/authMiddleware");
 const authController = require("../controllers/authController");
 
@@ -17,6 +18,7 @@ router.use("/mechanic", mechanicRoutes);
 router.use("/customer", customerRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/super-admin", superAdminRoutes);
+router.use("/", referralRoutes);
 
 // Compatibility alias for dashboard logout requests
 router.post("/admin-logout", auth(["ADMIN", "SUPER_ADMIN"]), authController.adminLogout);

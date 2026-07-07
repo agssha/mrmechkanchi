@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const { Admin, User } = require("../models");
+const { Admin, User, ReferralConfig } = require("../models");
 const logger = require("../utils/logger");
 
 const seedDatabase = async () => {
@@ -59,6 +59,20 @@ const seedDatabase = async () => {
             { upsert: true, new: true }
         );
         logger.info("✅ Mechanic Seeded (Log default): Phone: 8888888888 | Pass: mech123");
+
+        // 4. Seed Default Referral Config
+        const existingConfig = await ReferralConfig.findOne();
+        if (!existingConfig) {
+            await ReferralConfig.create({
+                referralTarget: 3,
+                rewardPercentage: 25,
+                couponExpiryDays: 90,
+                maxDiscountAmount: 500
+            });
+            logger.info("✅ Referral Config Seeded: Target: 3 | Reward: 25% | Expiry: 90 days | Max Discount: ₹500");
+        } else {
+            logger.info("ℹ️ Referral Config already exists. Skipping seeding.");
+        }
 
         logger.info("🌱 Database Seeding: Completed successfully.");
     } catch (error) {

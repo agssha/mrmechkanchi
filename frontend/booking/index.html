@@ -152,6 +152,7 @@
         <nav class="hidden md:flex items-center space-x-8">
             <a class="text-slate-600 hover:text-blue-600 transition-colors" href="/">Home</a>
             <a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1" href="/booking">Book Service</a>
+            <a class="text-slate-600 hover:text-blue-600 font-semibold transition-colors" href="/referral.html">Refer & Earn</a>
             <div id="auth-nav-status" class="text-sm font-medium text-slate-500"></div>
         </nav>
         <div class="flex md:hidden items-center gap-2">
@@ -164,6 +165,7 @@
     <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-md px-6 py-4 flex flex-col space-y-3 shadow-md">
         <a class="text-slate-600 hover:text-blue-600 pl-3 py-1 font-semibold" href="/">Home</a>
         <a class="text-blue-700 font-semibold border-l-4 border-blue-700 pl-3 py-1" href="/booking">Book Service</a>
+        <a class="text-slate-600 hover:text-blue-600 pl-3 py-1 font-semibold" href="/referral.html">Refer & Earn</a>
         <div id="auth-nav-status-mobile" class="pl-3 py-2 border-t border-slate-100"></div>
     </div>
 </header>
@@ -275,6 +277,27 @@
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-4 top-3 text-slate-400 text-lg">report_problem</span>
                             <textarea id="problem" required class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm resize-none" placeholder="Briefly describe the issue you're facing..." rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 ml-1">Referral Code (Optional)</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">local_offer</span>
+                                <input id="referralCode" class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm uppercase" placeholder="Friend's Code" type="text" />
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 ml-1">Reward Coupon Code (Optional)</label>
+                            <div class="relative flex gap-2">
+                                <div class="relative flex-grow">
+                                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">confirmation_number</span>
+                                    <input id="couponCode" class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-slate-200 rounded-xl text-sm uppercase" placeholder="REF-XXXXXX" type="text" />
+                                </div>
+                                <button type="button" onclick="applyCoupon()" class="bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold px-3 rounded-xl border border-blue-100 transition">Apply</button>
+                            </div>
+                            <div id="coupon-feedback" class="text-[10px] ml-2 font-bold hidden"></div>
                         </div>
                     </div>
 
@@ -430,6 +453,7 @@ window.signOut = async function () {
 // AUTH STATE
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
+    let currentSyncUserId = null;
 
     const modal = document.getElementById("auth-modal");
     const mainContent = document.getElementById("main-content");
@@ -438,6 +462,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (!session) {
             activeUser = null;
+            currentSyncUserId = null;
 
             modal.classList.remove("hidden");
             mainContent.classList.add("hidden");
@@ -481,13 +506,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 activeUser.user_metadata.full_name;
         }
 
-        loadTrackingLogs();
+        if (currentSyncUserId === activeUser.id) {
+            return;
+        }
+        currentSyncUserId = activeUser.id;
 
-        if (pollingInterval) clearInterval(pollingInterval);
-
-        pollingInterval = setInterval(() => {
-            loadTrackingLogs();
-        }, 5000);
+        // Sync Customer details automatically inside dashboard
+        syncCustomer(activeUser);
     }
 
     const {
@@ -499,6 +524,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     supabaseClient.auth.onAuthStateChange((event, session) => {
         handleSession(session);
     });
+
+    // Check URL parameters for Referral code invitation
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get("ref");
+    if (ref) {
+        document.getElementById("referralCode").value = ref.toUpperCase().trim();
+    }
+});
+
+// Sync Supabase Customer Profile
+async function syncCustomer(user) {
+    try {
+        const payload = {
+            userId: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || "Valued Customer",
+            phone: user.phone || ""
+        };
+
+        const res = await fetch(`${API_BASE.replace('/api', '')}/api/customer/sync-profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        if (res.ok && data.customer?.referredByCode) {
+            const refField = document.getElementById("referralCode");
+            refField.value = data.customer.referredByCode;
+            refField.disabled = true;
+            refField.classList.add("bg-slate-100", "cursor-not-allowed");
+        }
+    } catch (err) {
+        console.error("Profile sync error:", err);
+    }
+}
+
+// Validate Reward Coupon code
+window.applyCoupon = async function() {
+    const code = document.getElementById("couponCode").value.trim();
+    const feedback = document.getElementById("coupon-feedback");
+    
+    if (!code) {
+        alert("Please enter a coupon code. ❌");
+        return;
+    }
+    if (!activeUser) {
+        alert("Please login first to apply coupon. ❌");
+        return;
+    }
+    
+    try {
+        feedback.classList.remove("hidden");
+        feedback.className = "text-[10px] ml-2 font-bold text-slate-400";
+        feedback.innerText = "Verifying coupon code validity...";
+
+        const res = await fetch(`${API_BASE.replace('/api', '')}/api/customer/validate-coupon`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                code: code,
+                email: activeUser.email,
+                serviceCharge: 500 // simulated charge checks
+            })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+            feedback.className = "text-[10px] ml-2 font-bold text-red-600";
+            feedback.innerText = data.message || "Invalid coupon code";
+            return;
+        }
+        
+        feedback.className = "text-[10px] ml-2 font-bold text-emerald-600";
+        feedback.innerText = `Coupon valid! Will apply 25% OFF discount (max ₹${data.coupon.maxDiscount}) on final service charge.`;
+    } catch (err) {
+        console.error(err);
+        feedback.className = "text-[10px] ml-2 font-bold text-red-600";
+        feedback.innerText = "Error connecting to validation engine.";
+    }
+};
 
     // ==========================================
     // BOOKING FORM
@@ -517,6 +623,37 @@ document.addEventListener("DOMContentLoaded", async () => {
             const submitBtn = e.target.querySelector("button[type='submit']");
             setButtonLoading(submitBtn, true, "Booking... Please Wait");
 
+            // 1. Submit referral code first if inputted and not yet linked
+            const refField = document.getElementById("referralCode");
+            const referralCodeVal = refField ? refField.value.trim() : "";
+            if (referralCodeVal && refField && !refField.disabled) {
+                try {
+                    const refRes = await fetch(`${API_BASE.replace('/api', '')}/api/customer/submit-referral`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            customerEmail: activeUser.email,
+                            referralCode: referralCodeVal
+                        })
+                    });
+                    
+                    const refData = await refRes.json();
+                    if (!refRes.ok) {
+                        alert("Referral Code Error: " + refData.message + " ❌");
+                        setButtonLoading(submitBtn, false);
+                        return;
+                    }
+                    
+                    // Link success, lock it
+                    refField.disabled = true;
+                    refField.classList.add("bg-slate-100", "cursor-not-allowed");
+                } catch (err) {
+                    console.error("Referral linking failure:", err);
+                }
+            }
+
+            // 2. Prepare payload including Coupon Code
+            const couponVal = document.getElementById("couponCode").value.trim();
             const payload = {
                 name: document.getElementById("name").value.trim(),
                 mobileNumber: document.getElementById("phone").value.trim(),
@@ -524,7 +661,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 userId: activeUser.id,
                 serviceAddress: document.getElementById("address").value.trim(),
                 serviceType: document.getElementById("serviceType").value,
-                problemDescription: document.getElementById("problem").value.trim()
+                problemDescription: document.getElementById("problem").value.trim(),
+                couponCode: couponVal || null
             };
 
             try {
@@ -551,12 +689,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 alert("Booking Registered Successfully ✅");
 
                 document.getElementById("bookingForm").reset();
+                document.getElementById("coupon-feedback").classList.add("hidden");
 
                 if (activeUser.user_metadata?.full_name) {
                     document.getElementById("name").value =
                         activeUser.user_metadata.full_name;
                 }
 
+                // Reload customer profile states
+                syncCustomer(activeUser);
                 loadTrackingLogs();
                 setButtonLoading(submitBtn, false);
 
@@ -566,7 +707,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 setButtonLoading(submitBtn, false);
             }
         });
-});
+
 
 // ==========================================
 // LOAD TRACKING
