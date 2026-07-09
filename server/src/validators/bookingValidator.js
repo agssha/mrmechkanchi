@@ -37,6 +37,18 @@ class BookingValidator {
         next();
     }
 
+    static validateApplyDiscount(req, res, next) {
+        const { bookingId, discountAmount } = req.body;
+        if (!bookingId || discountAmount === undefined) {
+            return next(new AppError("Missing inputs (bookingId, discountAmount)", 400));
+        }
+        const numDiscount = Number(discountAmount);
+        if (isNaN(numDiscount) || numDiscount < 0) {
+            return next(new AppError("Invalid discount amount", 400));
+        }
+        next();
+    }
+
     static validateConfirmPayment(req, res, next) {
         const { bookingId } = req.body;
         if (!bookingId) {

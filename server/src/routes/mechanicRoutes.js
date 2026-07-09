@@ -13,6 +13,7 @@ router.use(auth("mechanic"));
 router.get("/my-jobs/:mechanicPhone", mechanicController.getMechanicBookings);
 router.put("/accept-job", BookingValidator.validateAccept, bookingController.acceptJob);
 router.put("/set-charge", BookingValidator.validateSetPrice, bookingController.setPrice);
+router.put("/apply-discount", BookingValidator.validateApplyDiscount, bookingController.applyCouponDiscount);
 router.put("/confirm-cash", BookingValidator.validateConfirmPayment, bookingController.recordCashPayment);
 
 module.exports = router;

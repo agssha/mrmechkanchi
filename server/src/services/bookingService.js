@@ -116,16 +116,61 @@ class BookingService {
             try {
                 const referralService = require("./referralService");
                 const validation = await referralService.validateCoupon(booking.couponCode, booking.userEmail, parsedPrice);
+                booking.maxCouponDiscount = validation.discountAmount;
                 booking.discountAmount = validation.discountAmount;
                 booking.finalPrice = validation.finalServiceCharge;
             } catch (err) {
                 logger.warn(`⚠️ Coupon validation failed during price setting for booking ${bookingId}: ${err.message}`);
+                booking.maxCouponDiscount = 0;
                 booking.discountAmount = 0;
                 booking.finalPrice = parsedPrice;
             }
         } else {
             booking.finalPrice = parsedPrice;
         }
+
+        await booking.save();
+        return booking;
+    }
+
+    /**
+     * Mechanic adjusts the coupon discount amount (must be <= maxCouponDiscount)
+     */
+    async applyCouponDiscount(bookingId, discountAmount, mechanicPhone) {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            throw new AppError("Booking reference missing", 404);
+        }
+
+        if (booking.acceptedBy !== mechanicPhone) {
+            throw new AppError("Unauthorized access verification failed.", 403);
+        }
+
+        if (!booking.couponCode) {
+            throw new AppError("No coupon is applied to this booking.", 400);
+        }
+
+        if (booking.status !== STATUS.PRICE_SET) {
+            throw new AppError("Price must be set before applying coupon discount.", 400);
+        }
+
+        const parsedDiscount = Number(discountAmount);
+        if (isNaN(parsedDiscount) || parsedDiscount < 0) {
+            throw new AppError("Invalid discount amount.", 400);
+        }
+
+        // Re-validate coupon to get the correct max discount based on estimated price
+        const referralService = require("./referralService");
+        const validation = await referralService.validateCoupon(booking.couponCode, booking.userEmail, booking.estimatedPrice);
+        const maxAllowedDiscount = validation.discountAmount;
+
+        if (parsedDiscount > maxAllowedDiscount) {
+            throw new AppError(`Discount amount cannot exceed the maximum coupon value of ₹${maxAllowedDiscount}.`, 400);
+        }
+
+        booking.maxCouponDiscount = maxAllowedDiscount;
+        booking.discountAmount = parsedDiscount;
+        booking.finalPrice = Math.max(0, booking.estimatedPrice - parsedDiscount);
 
         await booking.save();
         return booking;

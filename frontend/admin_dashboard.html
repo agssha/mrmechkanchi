@@ -507,10 +507,15 @@
 
             <!-- Generated Coupons Table -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
-                    <span class="material-symbols-outlined">confirmation_number</span>
-                    Generated Reward Coupons
-                </h3>
+                <div class="flex justify-between items-center">
+                    <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined">confirmation_number</span>
+                        Generated Reward Coupons
+                    </h3>
+                    <button id="btn-create-coupon-trigger" onclick="openCreateCouponModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg transition text-xs shadow-sm hidden">
+                        Create Coupon
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs border-collapse">
                         <thead>
@@ -690,6 +695,41 @@
             <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
                 <button type="button" onclick="closeCreateAdminModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm transition">Cancel</button>
                 <button type="submit" id="create-admin-submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition shadow-sm">Save Profile</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Coupon Modal -->
+<div id="create-coupon-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative mx-4">
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600 font-bold">confirmation_number</span>
+            Create Manual Coupon
+        </h3>
+        <button onclick="closeCreateCouponModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 focus:outline-none">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <form id="create-coupon-form" onsubmit="handleCreateCouponSubmit(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Customer Email</label>
+                <input type="email" id="create-coupon-email" required placeholder="customer@example.com" class="w-full border-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Discount Percentage (%)</label>
+                <input type="number" id="create-coupon-percentage" min="1" max="100" required placeholder="25" class="w-full border-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Maximum Discount Amount (₹)</label>
+                <input type="number" id="create-coupon-max" min="1" required placeholder="500" class="w-full border-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Expiry Duration (Days)</label>
+                <input type="number" id="create-coupon-expiry" min="1" required placeholder="90" class="w-full border-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeCreateCouponModal()" class="border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 transition">Cancel</button>
+                <button type="submit" id="create-coupon-submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold text-sm transition shadow-sm">Create Coupon</button>
             </div>
         </form>
     </div>
@@ -998,6 +1038,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetTab === "referrals") {
             loadReferralConfig();
             loadReferralActivities();
+            const triggerBtn = document.getElementById("btn-create-coupon-trigger");
+            if (triggerBtn) {
+                if (currentUser.role === "SUPER_ADMIN") {
+                    triggerBtn.classList.remove("hidden");
+                } else {
+                    triggerBtn.classList.add("hidden");
+                }
+            }
         }
     };
 
@@ -1174,7 +1222,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${b.status}
                         </span>
                     </td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">₹${b.estimatedPrice || b.price || 0}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${b.finalPrice !== undefined && b.finalPrice !== null ? b.finalPrice : (b.estimatedPrice || b.price || 0)}</td>
                 </tr>
             `;
         }).join("");
@@ -1212,7 +1260,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
                 <td class="px-6 py-4">
                     <div class="text-sm text-slate-700">${b.problemDescription || ""}</div>
-                    <div class="text-xs text-emerald-600 mt-1">₹${b.estimatedPrice || b.price || 0}</div>
+                    <div class="text-xs text-slate-700 mt-1 space-y-0.5">
+                        <div>Base: <b>₹${b.estimatedPrice || 0}</b></div>
+                        ${b.couponCode ? `
+                            <div class="text-rose-600">Discount: -₹${b.discountAmount || 0} (${b.couponCode})</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.finalPrice || 0}</div>
+                        ` : `
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.estimatedPrice || 0}</div>
+                        `}
+                    </div>
                 </td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs ${getBadge(b.status)}">
@@ -1261,7 +1317,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             customerGroups[phone].totalBookings++;
             if (b.paymentStatus === "Paid") {
-                customerGroups[phone].totalPaid += Number(b.estimatedPrice || b.price || 0);
+                customerGroups[phone].totalPaid += Number(b.finalPrice !== undefined && b.finalPrice !== null ? b.finalPrice : (b.estimatedPrice || b.price || 0));
             }
         });
 
@@ -1326,7 +1382,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         bookingsCache.forEach(b => {
             if (b.paymentStatus === "Paid") {
-                revenue += Number(b.estimatedPrice || b.price || 0);
+                revenue += Number(b.finalPrice !== undefined && b.finalPrice !== null ? b.finalPrice : (b.estimatedPrice || b.price || 0));
             }
         });
 
@@ -1369,8 +1425,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <td class="px-6 py-4">
                     ${b.problemDescription || ""}
-                    <div class="text-xs text-emerald-600 mt-1">
-                        ₹${b.estimatedPrice || b.price || 0}
+                    <div class="text-xs text-slate-700 mt-1 space-y-0.5">
+                        <div>Base: <b>₹${b.estimatedPrice || 0}</b></div>
+                        ${b.couponCode ? `
+                            <div class="text-rose-600">Discount: -₹${b.discountAmount || 0} (${b.couponCode})</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.finalPrice || 0}</div>
+                        ` : `
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.estimatedPrice || 0}</div>
+                        `}
                     </div>
                 </td>
 
@@ -1700,6 +1762,53 @@ document.addEventListener("DOMContentLoaded", () => {
             setButtonLoading(submitBtn, false);
         }
     };
+
+    window.openCreateCouponModal = function() {
+        document.getElementById("create-coupon-email").value = "";
+        document.getElementById("create-coupon-percentage").value = "25";
+        document.getElementById("create-coupon-max").value = "500";
+        document.getElementById("create-coupon-expiry").value = "90";
+        document.getElementById("create-coupon-modal").classList.remove("hidden");
+    };
+
+    window.closeCreateCouponModal = function() {
+        document.getElementById("create-coupon-modal").classList.add("hidden");
+    };
+
+    window.handleCreateCouponSubmit = async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById("create-coupon-submit-btn");
+        const customerEmail = document.getElementById("create-coupon-email").value.trim();
+        const discountPercentage = Number(document.getElementById("create-coupon-percentage").value);
+        const maxDiscount = Number(document.getElementById("create-coupon-max").value);
+        const expiryDays = Number(document.getElementById("create-coupon-expiry").value);
+
+        setButtonLoading(submitBtn, true, "Creating Coupon...");
+        try {
+            const res = await fetch(`${API_BASE}/api/super-admin/create-coupon`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ customerEmail, discountPercentage, maxDiscount, expiryDays })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || "Failed to create coupon");
+            } else {
+                alert("Coupon created successfully!");
+                closeCreateCouponModal();
+                loadReferralActivities(); // Reload tables
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error creating coupon");
+        } finally {
+            setButtonLoading(submitBtn, false);
+        }
+    };
+
 
     async function loadAdmins() {
         try {

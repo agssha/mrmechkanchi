@@ -454,7 +454,9 @@
     })();
 
     // 🔥 UPDATED: Central configurations wiring security components directly to server routes
-    const API_BASE = "https://mrmechkanchi-1.onrender.com/api/mechanic";
+    const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? `${window.location.origin}/api/mechanic`
+        : "https://mrmechkanchi-1.onrender.com/api/mechanic";
     const token = localStorage.getItem("token");
     const phone = localStorage.getItem("mechanicPhone");
 
@@ -581,6 +583,39 @@
         }
     }
 
+    async function applyDiscount(id, btn) {
+        const discountInput = document.getElementById(`discount-${id}`).value;
+        if (discountInput === "" || Number(discountInput) < 0) {
+            alert("Please enter a valid discount amount.");
+            return;
+        }
+
+        if (btn) setButtonLoading(btn, true, "Applying...");
+
+        try {
+            const res = await fetch(`${API_BASE}/apply-discount`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ bookingId: id, discountAmount: Number(discountInput) })
+            });
+
+            if(res.ok) {
+                alert("Coupon discount updated successfully!");
+                loadBookingFeedStream(true); // Force refresh
+            } else {
+                const data = await res.json();
+                alert(data.message || "Failed to apply discount.");
+                if (btn) setButtonLoading(btn, false);
+            }
+        } catch (err) {
+            console.error("Error applying discount:", err);
+            if (btn) setButtonLoading(btn, false);
+        }
+    }
+
     async function recordCashPayment(id, btn) {
         if(!confirm("Confirm Payment Command: Settle this ticket via Cash?")) return;
 
@@ -675,9 +710,15 @@
                         <p><b>Address:</b> ${b.serviceAddress}</p>
                         <p><b>Problem:</b> <span style="color: #4b5563; font-style: italic;">"${b.problemDescription}"</span></p>
                         <p><b>Invoice:</b> ${b.estimatedPrice > 0 ? `<b>₹${b.estimatedPrice}</b>` : "<span style='color:#dc2626;'>Awaiting</span>"}</p>
+                        ${b.couponCode ? `
+                            <p><b>Coupon Code:</b> <span style="background-color: #f3f4f6; color: #1f2937; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">${b.couponCode}</span></p>
+                            <p><b>Coupon Value (Max):</b> ₹${b.maxCouponDiscount || 0}</p>
+                            <p><b>Applied Discount:</b> ₹${b.discountAmount || 0}</p>
+                            <p><b>Final Price:</b> <b>₹${b.finalPrice || 0}</b></p>
+                        ` : ""}
                         
                         ${paymentContextHTML}
-
+ 
                         <div class="job-actions">
                             ${statusStr === 'assigned' ? `<button class="accept-btn" onclick="acceptJob('${safeId}', this)">Accept Order</button>` : ""}
                             
@@ -687,6 +728,12 @@
                             ` : ""}
                             
                             ${(statusStr === 'price_set' && b.paymentStatus !== 'Paid') ? `
+                                ${b.couponCode ? `
+                                    <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                        <input type="number" id="discount-${safeId}" class="price-input" style="width: 120px; margin-bottom: 0;" placeholder="Discount (max ₹${b.maxCouponDiscount || 0})" value="${b.discountAmount || 0}">
+                                        <button class="price-btn" style="background-color: #7c3aed; padding: 6px 12px;" onclick="applyDiscount('${safeId}', this)">Apply</button>
+                                    </div>
+                                ` : ""}
                                 <button class="complete-btn" onclick="recordCashPayment('${safeId}', this)">Confirm Cash & Complete</button>
                             ` : ""}
                         </div>

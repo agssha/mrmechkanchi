@@ -67,6 +67,10 @@ const bookingSchema = new mongoose.Schema({
         default: null,
         trim: true
     },
+    maxCouponDiscount: {
+        type: Number,
+        default: 0
+    },
     discountAmount: {
         type: Number,
         default: 0

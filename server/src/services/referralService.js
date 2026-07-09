@@ -142,15 +142,26 @@ class ReferralService {
         }
 
         // Check C: Device/IP matches
-        const hasMatchingIp = clientIp && (referrer.ipAddresses.includes(clientIp) || referredCustomer.ipAddresses.includes(clientIp));
-        const hasMatchingUserAgent = userAgent && (referrer.userAgentFingerprints.includes(userAgent) || referredCustomer.userAgentFingerprints.includes(userAgent));
-        
-        // Wait, IP might change or match on public Wi-Fi, but if BOTH match or we log it as suspicious.
-        // Let's prevent self-referral through exact matching IP or exact matching device details if it matches the current request
-        if (clientIp && referrer.ipAddresses.includes(clientIp)) {
+        const isLocalhost = clientIp && (
+            clientIp === "::1" || 
+            clientIp === "127.0.0.1" || 
+            clientIp.startsWith("::ffff:127.0.0.1") || 
+            clientIp === "localhost"
+        );
+
+        // Relax IP-sharing block: exclude localhost, and only block if BOTH IP and User Agent match.
+        // If only IP matches, log a warning but do not block (to support public Wi-Fi or family members).
+        if (clientIp && !isLocalhost && referrer.ipAddresses.includes(clientIp)) {
             logger.warn(`⚠️ Fraud Warning: Device/IP overlap. ${referredCustomer.email} referred by ${referrer.email} shares IP ${clientIp}`);
-            // Let's block self-referrals sharing the exact same IP address to prevent fake accounts.
-            throw new AppError("Referral rejected. Self-referral protection triggered via IP sharing.", 400);
+            
+            const isUserAgentShared = userAgent && (
+                referrer.userAgentFingerprints.includes(userAgent) || 
+                referredCustomer.userAgentFingerprints.includes(userAgent)
+            );
+            
+            if (isUserAgentShared) {
+                throw new AppError("Referral rejected. Self-referral protection triggered via IP and device sharing.", 400);
+            }
         }
 
         // Check D: Referred customer must be a new customer (no completed bookings)

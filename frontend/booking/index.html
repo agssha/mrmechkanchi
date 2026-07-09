@@ -801,6 +801,14 @@ async function loadTrackingLogs() {
                             <div class="font-bold text-blue-700">
                                 Estimated Price: ₹${job.estimatedPrice}
                             </div>
+                            ${job.discountAmount ? `
+                                <div class="font-bold text-emerald-700">
+                                    Discount Applied: -₹${job.discountAmount} (${job.couponCode})
+                                </div>
+                                <div class="font-bold text-indigo-700">
+                                    Final Price: ₹${job.finalPrice}
+                                </div>
+                            ` : ""}
                         ` : ""}
 
                         ${job.paymentStatus === "Paid" ? `

@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { Admin, TemporaryPermission, ActivityLog, Review } = require('../models');
+const { Admin, TemporaryPermission, ActivityLog, Review, Coupon, Customer } = require('../models');
 const AppError = require('../utils/appError');
 const { logActivity } = require('../middlewares/activityLogger');
 
@@ -164,6 +164,37 @@ exports.getReviews = async (req, res, next) => {
   try {
     const reviews = await Review.find().sort({ createdAt: -1 });
     res.json({ reviews });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Create a new Coupon manually (Super Admin only) */
+exports.createCoupon = async (req, res, next) => {
+  try {
+    const { customerEmail, discountPercentage, maxDiscount, expiryDays } = req.body;
+    if (!customerEmail || discountPercentage === undefined || maxDiscount === undefined || !expiryDays) {
+      throw new AppError('Missing required fields: customerEmail, discountPercentage, maxDiscount, expiryDays', 400);
+    }
+    const customer = await Customer.findOne({ email: customerEmail.toLowerCase() });
+    if (!customer) {
+      throw new AppError('Customer not found with this email', 404);
+    }
+    const couponCode = `MANUAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + Number(expiryDays));
+
+    const coupon = await Coupon.create({
+      code: couponCode,
+      customerId: customer._id,
+      discountPercentage: Number(discountPercentage),
+      maxDiscount: Number(maxDiscount),
+      expiryDate,
+      couponType: 'MANUAL_GRANT'
+    });
+
+    await logActivity(req.user.phone, 'Create Coupon', `Created manual coupon ${couponCode} for ${customerEmail}`);
+    res.status(201).json({ message: 'Coupon created successfully', coupon });
   } catch (err) {
     next(err);
   }
