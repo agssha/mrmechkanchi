@@ -10,6 +10,7 @@ router.use(auth(['SUPER_ADMIN']));
 // Admin CRUD
 router.post('/create-admin', superAdminController.createAdmin);
 router.post('/create-coupon', superAdminController.createCoupon);
+router.delete('/coupons/:id', superAdminController.deleteCoupon);
 router.get('/admins', superAdminController.getAdmins);
 router.put('/admin/:id', superAdminController.updateAdmin);
 router.delete('/admin/:id', superAdminController.deleteAdmin);

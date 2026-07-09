@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { Admin, TemporaryPermission, ActivityLog, Review, Coupon, Customer } = require('../models');
+const { Admin, TemporaryPermission, ActivityLog, Review, Coupon, Customer, CouponUsage } = require('../models');
 const AppError = require('../utils/appError');
 const { logActivity } = require('../middlewares/activityLogger');
 
@@ -195,6 +195,23 @@ exports.createCoupon = async (req, res, next) => {
 
     await logActivity(req.user.phone, 'Create Coupon', `Created manual coupon ${couponCode} for ${customerEmail}`);
     res.status(201).json({ message: 'Coupon created successfully', coupon });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Delete a Coupon manually (Super Admin only) */
+exports.deleteCoupon = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const coupon = await Coupon.findByIdAndDelete(id);
+    if (!coupon) throw new AppError('Coupon not found', 404);
+
+    // Clean up any usage history
+    await CouponUsage.deleteMany({ couponId: id });
+
+    await logActivity(req.user.phone, 'Delete Coupon', `Deleted coupon ${coupon.code}`);
+    res.json({ message: 'Coupon deleted successfully' });
   } catch (err) {
     next(err);
   }

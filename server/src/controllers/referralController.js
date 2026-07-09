@@ -151,6 +151,10 @@ class ReferralController {
                 throw new AppError("Referral not found", 404);
             }
 
+            if (referral.status !== "Pending") {
+                throw new AppError(`Referral has already been resolved as ${referral.status}`, 400);
+            }
+
             const referrer = await Customer.findById(referral.referrerId);
             const referred = await Customer.findById(referral.referredId);
 
