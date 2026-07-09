@@ -21,6 +21,11 @@ router.post('/revoke-permission', superAdminController.revokePermission);
 
 // Activity & Review endpoints
 router.get('/activity-logs', superAdminController.getActivityLogs);
+router.delete('/activity-logs/:id', superAdminController.deleteActivityLog);
+router.post('/activity-logs/bulk-delete', superAdminController.bulkDeleteActivityLogs);
+
 router.get('/reviews', superAdminController.getReviews);
+router.delete('/reviews/:id', superAdminController.deleteReview);
+router.post('/reviews/bulk-delete', superAdminController.bulkDeleteReviews);
 
 module.exports = router;

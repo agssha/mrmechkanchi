@@ -216,3 +216,64 @@ exports.deleteCoupon = async (req, res, next) => {
     next(err);
   }
 };
+
+/** Delete a single activity log (Super Admin only) */
+exports.deleteActivityLog = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const log = await ActivityLog.findByIdAndDelete(id);
+    if (!log) throw new AppError('Activity log not found', 404);
+
+    res.json({ message: 'Activity log deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Bulk delete activity logs (Super Admin only) */
+exports.bulkDeleteActivityLogs = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      throw new AppError('Missing or invalid activity log ids', 400);
+    }
+    
+    await ActivityLog.deleteMany({ _id: { $in: ids } });
+    
+    await logActivity(req.user.phone, 'Bulk Delete Logs', `Deleted ${ids.length} activity logs`);
+    res.json({ message: 'Selected activity logs deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Delete a single review (Super Admin only) */
+exports.deleteReview = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const review = await Review.findByIdAndDelete(id);
+    if (!review) throw new AppError('Review not found', 404);
+
+    await logActivity(req.user.phone, 'Delete Review', `Deleted review by ${review.customerName || 'customer'}`);
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Bulk delete reviews (Super Admin only) */
+exports.bulkDeleteReviews = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      throw new AppError('Missing or invalid review ids', 400);
+    }
+    
+    await Review.deleteMany({ _id: { $in: ids } });
+    
+    await logActivity(req.user.phone, 'Bulk Delete Reviews', `Deleted ${ids.length} reviews`);
+    res.json({ message: 'Selected reviews deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
