@@ -274,6 +274,7 @@
                                 <option value="Fridge Maintenance">Fridge Maintenance</option>
                                 <option value="Washing Machine Repair">Washing Machine Repair</option>
                                 <option value="Tailoring Machine Service">Tailoring Machine Service</option>
+                                <option value="Home Appliances Service">Home Appliances Service</option>
                             </select>
                         </div>
                     </div>
@@ -521,6 +522,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 selectEl.value = "Washing Machine Repair";
             } else if (serviceParam === "tailoring_machine") {
                 selectEl.value = "Tailoring Machine Service";
+            } else if (serviceParam === "home_appliances") {
+                selectEl.value = "Home Appliances Service";
             }
         }
     }

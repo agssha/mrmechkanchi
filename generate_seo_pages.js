@@ -420,6 +420,54 @@ const services = [
         a: "We service Singer, Usha, Brother, Merritt, Geminy, and specialized industrial machines like Juki."
       }
     ]
+  },
+  {
+    name: "Home Appliances Repair",
+    slug: "home-appliances-repair",
+    price: "₹199",
+    bookingVal: "home_appliances",
+    originalPage: "home_appliances_service.html",
+    keywords: ["Home Appliances Repair", "Home Appliances Service", "Mixer Grinder Repair", "Electric Induction Stove Repair", "Water Purifier Service", "Fan Repair"],
+    issues: [
+      {
+        title: "Mixer Grinder Motor & Coupler Jam",
+        desc: "Overloading or worn-out jar couplers prevent the blades from rotating, or causes the motor to spark and shut down."
+      },
+      {
+        title: "Electric Induction Stove Heating Failures",
+        desc: "Defective thermal sensors, IGBT power transistor failures, or motherboard circuit faults prevent the stove from heating."
+      },
+      {
+        title: "Water Purifier Filter Clogging & Taste Issues",
+        desc: "Sediment and carbon filters get choked with hard water contaminants, reducing water flow or causing unusual odors and taste."
+      },
+      {
+        title: "Ceiling Fan Winding Burnout or Noise",
+        desc: "Defective capacitors slow down the fan speed, while dry ball bearings or winding burnouts cause hums and squeaks."
+      },
+      {
+        title: "Appliance Power & Wire Short Circuits",
+        desc: "Frayed power cords or internal circuit short-circuits trigger home MCB breakers when switching on the appliance."
+      }
+    ],
+    faqs: [
+      {
+        q: "Do you repair mixer grinders and water purifiers on-site in [Location]?",
+        a: "Yes, our technicians carry all necessary spare parts like jar couplers, water filters, carbon brushes, and switches to complete repairs directly at your doorstep in [Location]."
+      },
+      {
+        q: "What is the cost of water purifier filter replacement in [Location]?",
+        a: "Our diagnostic visit starts at ₹199. Filter replacement costs depend on the filter type (Sediment, RO Membrane) and brand, which we charge transparently."
+      },
+      {
+        q: "Can you fix induction stoves of any brand?",
+        a: "Yes, we repair induction cooktops from Prestige, Pigeon, Philips, Bajaj, Havells, and other major brands using original components."
+      },
+      {
+        q: "Is there a warranty on home appliance servicing?",
+        a: "Every repair job, whether it's a fan motor replacement or mixer coupler fix, comes with a complete 30-day functional service warranty in [Location]."
+      }
+    ]
   }
 ];
 
@@ -1217,6 +1265,20 @@ locations.forEach(loc => {
             <div class="flex items-center justify-between pt-4 border-t border-slate-100">
               <span class="text-secondary text-sm font-bold">Starts at ₹199</span>
               <span class="material-symbols-outlined text-slate-300">arrow_right_alt</span>
+          </a>
+
+          <!-- Home Appliances Repair -->
+          <a href="/locations/${loc.slug}/home-appliances-repair" class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md border border-outline-variant/20 cursor-pointer flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4 text-primary">
+                <span class="material-symbols-outlined text-2xl">grid_view</span>
+              </div>
+              <h3 class="font-title-lg text-on-surface mb-2">Home Appliances Repair</h3>
+              <p class="text-xs text-on-surface-variant mb-4">Doorstep repair for mixer grinders, electric induction stoves, fans, and water purifiers near ${loc.landmark}.</p>
+            </div>
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+              <span class="text-secondary text-sm font-bold">Starts at ₹199</span>
+              <span class="material-symbols-outlined text-slate-300">arrow_right_alt</span>
             </div>
           </a>
 
@@ -1285,6 +1347,7 @@ const locationsDirHtml = `
                 <a href="/locations/${loc.slug}/refrigerator-repair" class="hover:text-blue-600">Fridge Repair</a>
                 <a href="/locations/${loc.slug}/washing-machine-repair" class="hover:text-blue-600">Washer Repair</a>
                 <a href="/locations/${loc.slug}/tailoring-machine-repair" class="hover:text-blue-600">Sewing Repair</a>
+                <a href="/locations/${loc.slug}/home-appliances-repair" class="hover:text-blue-600">Appliance Repair</a>
               </div>
             </div>
           </div>
@@ -1509,6 +1572,7 @@ let sitemapUrls = [
   { loc: "https://www.mrkanchi.in/washing-machine-service", freq: "weekly", priority: "0.80" },
   { loc: "https://www.mrkanchi.in/fridge-service", freq: "weekly", priority: "0.80" },
   { loc: "https://www.mrkanchi.in/tailoring-machine-service", freq: "weekly", priority: "0.80" },
+  { loc: "https://www.mrkanchi.in/home-appliances-service", freq: "weekly", priority: "0.80" },
   { loc: "https://www.mrkanchi.in/privacy%20policy", freq: "yearly", priority: "0.30" },
   { loc: "https://www.mrkanchi.in/terms%20of%20service", freq: "yearly", priority: "0.30" },
   { loc: "https://www.mrkanchi.in/locations", freq: "weekly", priority: "0.70" },
@@ -1567,6 +1631,7 @@ Allow: /ac-service
 Allow: /washing-machine-service
 Allow: /fridge-service
 Allow: /tailoring-machine-service
+Allow: /home-appliances-service
 Allow: /locations/
 Allow: /blog/
 Disallow: /admin/

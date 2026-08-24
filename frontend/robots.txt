@@ -7,6 +7,7 @@ Allow: /ac-service
 Allow: /washing-machine-service
 Allow: /fridge-service
 Allow: /tailoring-machine-service
+Allow: /home-appliances-service
 Allow: /locations/
 Allow: /blog/
 Disallow: /admin/
