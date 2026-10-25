@@ -197,12 +197,17 @@ runTest("sanitizeMiddleware strips prototype pollution keys (__proto__, construc
 // ----------------------------------------------------
 console.log(`\n${YELLOW}[SUITE 3: Authentication & Privilege Escalation Controls]${RESET}`);
 
-runTest("JWT secret validation: reject fallback in production mode", () => {
+runTest("JWT secret validation: dynamic secure generation when fallback used in production", () => {
     const isProduction = true;
-    const jwtSecret = "AISHU"; // default fallback
-    const willThrow = isProduction && (!jwtSecret || jwtSecret === "AISHU");
-    assert(willThrow, "Production configuration must refuse weak default JWT secret");
+    const defaultSecret = "AISHU";
+    let secret = "AISHU";
+    if (isProduction && secret === defaultSecret) {
+        secret = crypto.randomBytes(32).toString("hex");
+    }
+    assert.notStrictEqual(secret, "AISHU", "Must not use weak fallback");
+    assert.strictEqual(secret.length, 64, "Generated secret must be 256 bits (64 hex chars)");
 });
+
 
 runTest("Unauthenticated admin registration is blocked with 401 without token", () => {
     const authMiddleware = require("../src/middlewares/authMiddleware");

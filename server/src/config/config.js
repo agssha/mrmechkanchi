@@ -1,11 +1,22 @@
 const dotenv = require("dotenv");
 const path = require("path");
+const crypto = require("crypto");
 
 // Load environmental variables from server/.env
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const defaultJwtSecret = "AISHU";
-const isProduction = (process.env.NODE_ENV || "development") === "production";
+let resolvedJwtSecret = process.env.JWT_SECRET;
+
+if (!resolvedJwtSecret || resolvedJwtSecret === defaultJwtSecret) {
+    if ((process.env.NODE_ENV || "development") === "production") {
+        // Generate a cryptographically secure random 256-bit secret so the server boots safely without token forgery risk
+        resolvedJwtSecret = crypto.randomBytes(32).toString("hex");
+        console.warn("⚠️ SECURITY WARNING: 'JWT_SECRET' was not set or was using default fallback in production. A cryptographically secure 256-bit random secret was generated dynamically for this session. To avoid session invalidation across server restarts, please set a persistent 'JWT_SECRET' in your environment settings.");
+    } else {
+        resolvedJwtSecret = defaultJwtSecret;
+    }
+}
 
 const config = {
     env: process.env.NODE_ENV || "development",
@@ -15,7 +26,7 @@ const config = {
         options: {}
     },
     jwt: {
-        secret: process.env.JWT_SECRET || defaultJwtSecret,
+        secret: resolvedJwtSecret,
         accessExpirationDays: 1
     },
     cors: {
@@ -37,10 +48,6 @@ if (!config.mongoose.url) {
     throw new Error("❌ CRITICAL CONFIG ERROR: 'MONGO_URI' must be defined in the .env configuration file.");
 }
 
-// In production, refuse to start with insecure default JWT secret
-if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET === defaultJwtSecret)) {
-    throw new Error("❌ CRITICAL SECURITY ERROR: In production, 'JWT_SECRET' must be set to a cryptographically strong secret in the environment variables.");
-}
-
 module.exports = config;
+
 

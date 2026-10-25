@@ -101,10 +101,12 @@ All source code vulnerabilities that could safely be remediated within the repos
 - **CVSS Score:** 8.6
 - **File Affected:** [`server/src/config/config.js`](file:///d:/fsd/mr.mech%20kanchi/server/src/config/config.js)
 - **Impact & Realistic Scenario:**  
-  `config.jwt.secret` defaulted to the fallback string `"AISHU"` if `process.env.JWT_SECRET` was undefined. If deployed without setting the variable, an attacker knowing the fallback string could forge valid tokens with `role: "SUPER_ADMIN"` and gain full platform control.
-- **Root Cause:** Lack of production environment enforcement check.
+  `config.jwt.secret` defaulted to the hardcoded string `"AISHU"` if `process.env.JWT_SECRET` was omitted. Any attacker knowing the fallback string could forge valid tokens with `role: "SUPER_ADMIN"`.
+- **Root Cause:** Insecure hardcoded string fallback.
 - **Remediation Implemented:**
-  - Added strict validation in `server/src/config/config.js`: in production (`NODE_ENV === "production"`), the server throws a critical exception and refuses to boot if `JWT_SECRET` is unset or equals the fallback default.
+  - In `server/.env`, generated and set a cryptographically secure 256-bit (64-character hex) random secret (`5b246ed2...`).
+  - In `server/src/config/config.js`, implemented dynamic cryptographic fallback: if `JWT_SECRET` is missing or uses `"AISHU"` in production, the server automatically generates a secure 256-bit in-memory random secret using `crypto.randomBytes(32)` and issues a warning. This prevents both server crashes on deployment and token forgery attacks.
+
 
 ---
 
