@@ -6,7 +6,7 @@ const auth = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 // Central access points to authenticate credentials
-router.post("/admin-register", AuthValidator.validateRegister, authController.adminRegister);
+router.post("/admin-register", auth(["SUPER_ADMIN"]), AuthValidator.validateRegister, authController.adminRegister);
 router.post("/admin-login", AuthValidator.validateLogin, authController.adminLogin);
 router.post("/mechanic-login", AuthValidator.validateLogin, authController.loginMechanic);
 

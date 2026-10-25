@@ -229,7 +229,11 @@ class BookingService {
      * Customer tracks bookings via email, masking phone depending on status
      */
     async trackBooking(email) {
-        const data = await Booking.find({ userEmail: email }).sort({ createdAt: -1 });
+        if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+            throw new AppError("A valid email address is required to track service bookings", 400);
+        }
+        const cleanEmail = email.trim().toLowerCase();
+        const data = await Booking.find({ userEmail: cleanEmail }).sort({ createdAt: -1 }).limit(50);
 
         return data.map(b => {
             const canSeeNumber = b.status === STATUS.ACCEPTED || b.status === STATUS.PRICE_SET || b.status === STATUS.COMPLETED;
@@ -238,6 +242,7 @@ class BookingService {
             return bookingObj;
         });
     }
+
 
     /**
      * Admin modifies booking status directly

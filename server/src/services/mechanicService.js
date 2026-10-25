@@ -30,10 +30,12 @@ class MechanicService {
      * Get specific bookings assigned to a mechanic
      */
     async getMechanicBookings(mechanicPhone, requesterPhone, requesterRole) {
-        // Enforce identification match check unless user is admin
-        if (requesterRole !== "admin" && requesterPhone !== mechanicPhone) {
+        // Enforce identification match check unless user is admin or super admin
+        const normalizedRole = (requesterRole || "").toLowerCase();
+        if (!["admin", "super_admin"].includes(normalizedRole) && requesterPhone !== mechanicPhone) {
             throw new AppError("Access Denied: Identification match verification failed.", 403);
         }
+
 
         const data = await Booking.find({ assignedMechanicId: mechanicPhone }).sort({ createdAt: -1 });
 

@@ -2,17 +2,81 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const cors = require("cors");
 
-// Define standard CORS setup
+const config = require("../config/config");
+
+// Define hardened CORS setup with explicit allowed origins
 const corsMiddleware = cors({
-    origin: "*", // Keep identical to original server configuration for API compatibility
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. mobile apps, same-origin, curl, server-to-server)
+        if (!origin) return callback(null, true);
+
+        const allowed = config.cors.allowedOrigins;
+        if (allowed.includes("*") || allowed.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Allow localhost/127.0.0.1 in non-production
+        if (config.env !== "production" && (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS error: Request origin '${origin}' is not authorized.`));
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 });
 
-// Configure Helmet security headers (with support for CDN scripts if needed)
+// Configure Helmet security headers with tuned Content Security Policy
 const helmetMiddleware = helmet({
-    contentSecurityPolicy: false // Disabled for APIs to facilitate cross-origin operations
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.tailwindcss.com",
+                "https://cdn.jsdelivr.net",
+                "https://checkout.razorpay.com"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://fonts.googleapis.com"
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com",
+                "data:"
+            ],
+            imgSrc: [
+                "'self'",
+                "data:",
+                "https:",
+                "blob:"
+            ],
+            connectSrc: [
+                "'self'",
+                "https://vhdngekmhxldkyvrcblz.supabase.co",
+                "https://mrmechkanchi-1.onrender.com",
+                "https://api.razorpay.com",
+                "https://www.mrkanchi.in",
+                "https://mrkanchi.in",
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+            ],
+            frameSrc: [
+                "'self'",
+                "https://api.razorpay.com",
+                "https://checkout.razorpay.com"
+            ],
+            frameAncestors: ["'self'"],
+            objectSrc: ["'none'"]
+        }
+    },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    crossOriginEmbedderPolicy: false
 });
+
 
 // Configure request rate limiting
 const generalLimiter = rateLimit({
@@ -35,10 +99,10 @@ const authLimiter = rateLimit({
 const sanitizeObject = (obj) => {
     if (obj && typeof obj === "object") {
         Object.keys(obj).forEach(key => {
-            // Drop keys starting with MongoDB operator indicators ($) or containing query path delimiters (.)
-            if (key.startsWith("$") || key.includes(".")) {
+            // Drop keys starting with MongoDB operator indicators ($), containing (.), or prototype pollution keys
+            if (key.startsWith("$") || key.includes(".") || key === "__proto__" || key === "constructor" || key === "prototype") {
                 delete obj[key];
-            } else if (typeof obj[key] === "object") {
+            } else if (typeof obj[key] === "object" && obj[key] !== null) {
                 sanitizeObject(obj[key]);
             }
         });

@@ -4,7 +4,11 @@ const config = require("../config/config");
 const auth = (role) => (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader?.split(" ")[1];
+        let token = null;
+
+        if (authHeader && typeof authHeader === "string") {
+            token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
+        }
 
         if (!token) {
             return res.status(401).json({ message: "Access Denied. No token provided." });
@@ -25,6 +29,7 @@ const auth = (role) => (req, res, next) => {
     } catch (error) {
         return res.status(401).json({ message: "Invalid or expired session token." });
     }
+
 };
 
 module.exports = auth;

@@ -451,7 +451,15 @@
                 }
             }
         };
-    })();
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
     // 🔥 UPDATED: Central configurations wiring security components directly to server routes
     const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
@@ -463,7 +471,7 @@
     // Secure Routing Shield Verification Guard Route
     if (!token || !phone) {
         alert("Security clearance validation missing. Returning to verification gateway.");
-        window.location.href = "/login";
+        window.location.href = "/mech_login.html";
     }
 
     // =========================================================================
@@ -498,7 +506,7 @@
     function executeLogout() {
         if(!confirm("Are you sure you want to log out of the session?")) return;
         localStorage.clear();
-        window.location.href = "/login";
+        window.location.href = "/mech_login.html";
     }
 
     function switchView(target) {
@@ -702,20 +710,21 @@
                 const cardTemplate = `
                     <div class="${cardClass}">
                         <h3>
-                            <span>${b.serviceType || "Repair Ticket"}</span>
-                            <span class="${badgeClass}">${b.status.replace("_", " ")}</span>
+                            <span>${escapeHtml(b.serviceType || "Repair Ticket")}</span>
+                            <span class="${badgeClass}">${escapeHtml(b.status ? b.status.replace("_", " ") : "")}</span>
                         </h3>
-                        <p><b>Customer:</b> ${b.name || "Customer"}</p>
-                        <p><b>Phone:</b> ${isMasked ? "🔒 Hidden" : `<a href="tel:${b.mobileNumber}" style="color: #2563eb; font-weight: bold;">${b.mobileNumber}</a>`}</p>
-                        <p><b>Address:</b> ${b.serviceAddress}</p>
-                        <p><b>Problem:</b> <span style="color: #4b5563; font-style: italic;">"${b.problemDescription}"</span></p>
-                        <p><b>Invoice:</b> ${b.estimatedPrice > 0 ? `<b>₹${b.estimatedPrice}</b>` : "<span style='color:#dc2626;'>Awaiting</span>"}</p>
+                        <p><b>Customer:</b> ${escapeHtml(b.name || "Customer")}</p>
+                        <p><b>Phone:</b> ${isMasked ? "🔒 Hidden" : `<a href="tel:${escapeHtml(b.mobileNumber)}" style="color: #2563eb; font-weight: bold;">${escapeHtml(b.mobileNumber)}</a>`}</p>
+                        <p><b>Address:</b> ${escapeHtml(b.serviceAddress || "")}</p>
+                        <p><b>Problem:</b> <span style="color: #4b5563; font-style: italic;">"${escapeHtml(b.problemDescription || "")}"</span></p>
+                        <p><b>Invoice:</b> ${b.estimatedPrice > 0 ? `<b>₹${Number(b.estimatedPrice)}</b>` : "<span style='color:#dc2626;'>Awaiting</span>"}</p>
                         ${b.couponCode ? `
-                            <p><b>Coupon Code:</b> <span style="background-color: #f3f4f6; color: #1f2937; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">${b.couponCode}</span></p>
-                            <p><b>Coupon Value (Max):</b> ₹${b.maxCouponDiscount || 0}</p>
-                            <p><b>Applied Discount:</b> ₹${b.discountAmount || 0}</p>
-                            <p><b>Final Price:</b> <b>₹${b.finalPrice || 0}</b></p>
+                            <p><b>Coupon Code:</b> <span style="background-color: #f3f4f6; color: #1f2937; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">${escapeHtml(b.couponCode)}</span></p>
+                            <p><b>Coupon Value (Max):</b> ₹${Number(b.maxCouponDiscount || 0)}</p>
+                            <p><b>Applied Discount:</b> ₹${Number(b.discountAmount || 0)}</p>
+                            <p><b>Final Price:</b> <b>₹${Number(b.finalPrice || 0)}</b></p>
                         ` : ""}
+
                         
                         ${paymentContextHTML}
  

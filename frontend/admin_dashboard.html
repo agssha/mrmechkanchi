@@ -868,6 +868,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // Helper to sanitize dynamic string data preventing Stored and DOM XSS
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Helper to decode JWT token client-side
     function decodeToken(t) {
         try {
@@ -1223,15 +1234,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return `
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="py-2 px-3">
-                        <div class="font-semibold text-slate-800">${b.name || "Customer"}</div>
-                        <div class="text-[10px] text-slate-400">${b.mobileNumber || ""}</div>
+                        <div class="font-semibold text-slate-800">${escapeHtml(b.name || "Customer")}</div>
+                        <div class="text-[10px] text-slate-400">${escapeHtml(b.mobileNumber || "")}</div>
                     </td>
                     <td class="py-2 px-3">
                         <span class="px-1.5 py-0.5 rounded-full text-[10px] ${getBadge(b.status)}">
-                            ${b.status}
+                            ${escapeHtml(b.status)}
                         </span>
                     </td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">₹${b.finalPrice !== undefined && b.finalPrice !== null ? b.finalPrice : (b.estimatedPrice || b.price || 0)}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${Number(b.finalPrice !== undefined && b.finalPrice !== null ? b.finalPrice : (b.estimatedPrice || b.price || 0))}</td>
                 </tr>
             `;
         }).join("");
@@ -1264,30 +1275,31 @@ document.addEventListener("DOMContentLoaded", () => {
             row.className = "hover:bg-slate-50 transition-colors";
             row.innerHTML = `
                 <td class="px-6 py-4">
-                    <div class="font-bold text-slate-800">${b.name || "Customer"}</div>
-                    <div class="text-xs text-slate-500">${b.mobileNumber || ""}</div>
+                    <div class="font-bold text-slate-800">${escapeHtml(b.name || "Customer")}</div>
+                    <div class="text-xs text-slate-500">${escapeHtml(b.mobileNumber || "")}</div>
                 </td>
                 <td class="px-6 py-4">
-                    <div class="text-sm text-slate-700">${b.problemDescription || ""}</div>
+                    <div class="text-sm text-slate-700">${escapeHtml(b.problemDescription || "")}</div>
                     <div class="text-xs text-slate-700 mt-1 space-y-0.5">
-                        <div>Base: <b>₹${b.estimatedPrice || 0}</b></div>
+                        <div>Base: <b>₹${Number(b.estimatedPrice || 0)}</b></div>
                         ${b.couponCode ? `
-                            <div class="text-rose-600">Discount: -₹${b.discountAmount || 0} (${b.couponCode})</div>
-                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.finalPrice || 0}</div>
+                            <div class="text-rose-600">Discount: -₹${Number(b.discountAmount || 0)} (${escapeHtml(b.couponCode)})</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${Number(b.finalPrice || 0)}</div>
                         ` : `
-                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.estimatedPrice || 0}</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${Number(b.estimatedPrice || 0)}</div>
                         `}
                     </div>
                 </td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs ${getBadge(b.status)}">
-                        ${b.status}
+                        ${escapeHtml(b.status)}
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    <div class="font-medium text-slate-800">${b.mechanicName || "Unknown Staff"}</div>
-                    <div class="text-xs text-slate-500">${b.assignedMechanicId || ""}</div>
+                    <div class="font-medium text-slate-800">${escapeHtml(b.mechanicName || "Unknown Staff")}</div>
+                    <div class="text-xs text-slate-500">${escapeHtml(b.assignedMechanicId || "")}</div>
                 </td>
+
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                         <button class="editBtn bg-slate-800 text-white px-3 py-1.5 rounded text-xs hover:bg-slate-900 transition flex items-center gap-1">
@@ -1343,11 +1355,11 @@ document.addEventListener("DOMContentLoaded", () => {
         tbody.innerHTML = list.map(c => {
             return `
                 <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-bold text-slate-800">${c.name}</td>
-                    <td class="px-6 py-4 text-slate-600">${c.phone}</td>
-                    <td class="px-6 py-4 text-slate-600">${c.email}</td>
-                    <td class="px-6 py-4 font-semibold text-slate-800">${c.totalBookings}</td>
-                    <td class="px-6 py-4 text-emerald-600 font-semibold">₹${c.totalPaid}</td>
+                    <td class="px-6 py-4 font-bold text-slate-800">${escapeHtml(c.name)}</td>
+                    <td class="px-6 py-4 text-slate-600">${escapeHtml(c.phone)}</td>
+                    <td class="px-6 py-4 text-slate-600">${escapeHtml(c.email)}</td>
+                    <td class="px-6 py-4 font-semibold text-slate-800">${Number(c.totalBookings)}</td>
+                    <td class="px-6 py-4 text-emerald-600 font-semibold">₹${Number(c.totalPaid)}</td>
                 </tr>
             `;
         }).join("");
@@ -1372,15 +1384,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const isSuperAdmin = currentUser.role === "SUPER_ADMIN";
 
             container.innerHTML = reviews.map(r => {
+                const safeReviewId = escapeHtml(r._id);
                 const deleteBtnHtml = isSuperAdmin
-                    ? `<button onclick="deleteReview('${r._id}', this)" class="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-bold py-1 px-2.5 rounded text-[10px] transition">Delete</button>`
+                    ? `<button onclick="deleteReview('${safeReviewId}', this)" class="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-bold py-1 px-2.5 rounded text-[10px] transition">Delete</button>`
                     : '';
                 return `
                     <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start">
                         <div>
-                            <h3 class="font-bold text-slate-800">${r.customerName || "Customer"}</h3>
-                            <p class="text-sm text-slate-600 mt-1">${r.review}</p>
-                            <p class="text-xs text-slate-400 mt-2">Rating: ${r.rating}/5</p>
+                            <h3 class="font-bold text-slate-800">${escapeHtml(r.customerName || "Customer")}</h3>
+                            <p class="text-sm text-slate-600 mt-1">${escapeHtml(r.review)}</p>
+                            <p class="text-xs text-slate-400 mt-2">Rating: ${Number(r.rating)}/5</p>
                         </div>
                         ${deleteBtnHtml}
                     </div>
@@ -1438,37 +1451,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
             row.innerHTML = `
                 <td class="px-6 py-4">
-                    <div class="font-bold">${b.name || "Customer"}</div>
-                    <div class="text-xs text-slate-500">${b.mobileNumber || ""}</div>
+                    <div class="font-bold">${escapeHtml(b.name || "Customer")}</div>
+                    <div class="text-xs text-slate-500">${escapeHtml(b.mobileNumber || "")}</div>
                 </td>
 
                 <td class="px-6 py-4">
-                    ${b.problemDescription || ""}
+                    ${escapeHtml(b.problemDescription || "")}
                     <div class="text-xs text-slate-700 mt-1 space-y-0.5">
-                        <div>Base: <b>₹${b.estimatedPrice || 0}</b></div>
+                        <div>Base: <b>₹${Number(b.estimatedPrice || 0)}</b></div>
                         ${b.couponCode ? `
-                            <div class="text-rose-600">Discount: -₹${b.discountAmount || 0} (${b.couponCode})</div>
-                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.finalPrice || 0}</div>
+                            <div class="text-rose-600">Discount: -₹${Number(b.discountAmount || 0)} (${escapeHtml(b.couponCode)})</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${Number(b.finalPrice || 0)}</div>
                         ` : `
-                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${b.estimatedPrice || 0}</div>
+                            <div class="text-emerald-700 font-bold">Paid/Final: ₹${Number(b.estimatedPrice || 0)}</div>
                         `}
                     </div>
                 </td>
 
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs ${getBadge(b.status)}">
-                        ${b.status}
+                        ${escapeHtml(b.status)}
                     </span>
                 </td>
 
                 <td class="px-6 py-4">
-                    ${assigned ? b.mechanicName : `
+                    ${assigned ? escapeHtml(b.mechanicName) : `
                         <select class="mechanicSelect border rounded p-2 text-xs">
                             <option value="">Select</option>
-                            ${mechanics.map(m => `<option value="${m.phone}">${m.name}</option>`).join("")}
+                            ${mechanics.map(m => `<option value="${escapeHtml(m.phone)}">${escapeHtml(m.name)}</option>`).join("")}
                         </select>
                     `}
                 </td>
+
 
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">

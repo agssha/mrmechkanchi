@@ -23,13 +23,25 @@ app.set("trust proxy", 1);
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 
+// Defensive response headers
+app.use((req, res, next) => {
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self 'https://checkout.razorpay.com')");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    if (req.path.startsWith("/api")) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+    }
+    next();
+});
+
 // =====================================================
-// REQUEST BODY PARSING & SANITIZATION
+// REQUEST BODY PARSING & SANITIZATION (WITH STRICT LIMITS)
 // =====================================================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50kb" }));
+app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use(sanitizeMiddleware); // Protect against NoSQL injection
 app.use("/api", duplicatePreventer(3000)); // Protect all API endpoints from rapid duplicates
+
 
 // =====================================================
 // SERVE FRONTEND STATIC FILES

@@ -326,10 +326,15 @@ class ReferralService {
      * Fetch referral details for the dashboard
      */
     async getCustomerReferralDetails(userIdOrCustomerEmail) {
+        if (!userIdOrCustomerEmail || typeof userIdOrCustomerEmail !== "string" || userIdOrCustomerEmail.trim().length > 150) {
+            throw new AppError("Invalid customer identity provided", 400);
+        }
+        const cleanIdentity = userIdOrCustomerEmail.trim();
         // Query by either supabase user ID or email
         const customer = await Customer.findOne({
-            $or: [{ userId: userIdOrCustomerEmail }, { email: String(userIdOrCustomerEmail).toLowerCase() }]
+            $or: [{ userId: cleanIdentity }, { email: cleanIdentity.toLowerCase() }]
         });
+
 
         if (!customer) {
             // Return fallback dashboard structure to gracefully handle sync latency

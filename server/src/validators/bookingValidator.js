@@ -2,12 +2,43 @@ const AppError = require("../utils/appError");
 
 class BookingValidator {
     static validateCreate(req, res, next) {
-        const { name, mobileNumber, serviceAddress, serviceType } = req.body;
+        const { name, mobileNumber, serviceAddress, serviceType, problemDescription, userEmail, couponCode } = req.body;
         if (!name || !mobileNumber || !serviceAddress || !serviceType) {
             return next(new AppError("All fields required (name, mobileNumber, serviceAddress, serviceType)", 400));
         }
+
+        if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) {
+            return next(new AppError("Customer name must be between 2 and 100 characters", 400));
+        }
+
+        const phoneRegex = /^[+]?[\d\s-]{10,15}$/;
+        if (typeof mobileNumber !== "string" || !phoneRegex.test(mobileNumber.trim())) {
+            return next(new AppError("Please provide a valid 10-15 digit mobile number", 400));
+        }
+
+        if (typeof serviceAddress !== "string" || serviceAddress.trim().length < 5 || serviceAddress.trim().length > 300) {
+            return next(new AppError("Service address must be between 5 and 300 characters", 400));
+        }
+
+        if (typeof serviceType !== "string" || serviceType.trim().length > 100) {
+            return next(new AppError("Invalid service type specified", 400));
+        }
+
+        if (problemDescription && (typeof problemDescription !== "string" || problemDescription.length > 500)) {
+            return next(new AppError("Problem description cannot exceed 500 characters", 400));
+        }
+
+        if (userEmail && (typeof userEmail !== "string" || userEmail.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail.trim()))) {
+            return next(new AppError("Invalid email address format", 400));
+        }
+
+        if (couponCode && (typeof couponCode !== "string" || couponCode.length > 30)) {
+            return next(new AppError("Invalid coupon code format", 400));
+        }
+
         next();
     }
+
 
     static validateAssign(req, res, next) {
         const { bookingId, mechanicName, mechanicPhone } = req.body;
@@ -58,22 +89,53 @@ class BookingValidator {
     }
 
     static validateOnlinePayment(req, res, next) {
-        const { bookingId, razorpayOrderId } = req.body;
-        if (!bookingId) {
-            return next(new AppError("Booking reference verified invalid", 400));
+        const { bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+        if (!bookingId || !razorpayOrderId) {
+            return next(new AppError("Missing required online transaction parameters (bookingId, razorpayOrderId)", 400));
+        }
+
+        const secret = process.env.RAZORPAY_KEY_SECRET;
+        if (secret) {
+            if (!razorpayPaymentId || !razorpaySignature) {
+                return next(new AppError("Missing Razorpay verification tokens (razorpayPaymentId, razorpaySignature)", 400));
+            }
+            const crypto = require("crypto");
+            const expectedSignature = crypto
+                .createHmac("sha256", secret)
+                .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+                .digest("hex");
+
+            if (expectedSignature !== razorpaySignature) {
+                return next(new AppError("Invalid payment signature verification failed", 400));
+            }
         }
         next();
     }
+
 
     static validateReview(req, res, next) {
         const { bookingId, customerName, rating, review } = req.body;
         if (!bookingId || !customerName || rating === undefined || !review) {
             return next(new AppError("All required tracking variables must be present (bookingId, customerName, rating, review)", 400));
         }
-        const numRating = Number(rating);
-        if (isNaN(numRating) || numRating < 1 || numRating > 5) {
-            return next(new AppError("Rating context scale constraints: 1-5", 400));
+
+        if (typeof bookingId !== "string" || !/^[0-9a-fA-F]{24}$/.test(bookingId.trim())) {
+            return next(new AppError("Invalid booking reference ID format", 400));
         }
+
+        if (typeof customerName !== "string" || customerName.trim().length < 2 || customerName.trim().length > 100) {
+            return next(new AppError("Customer name must be between 2 and 100 characters", 400));
+        }
+
+        const numRating = Number(rating);
+        if (isNaN(numRating) || numRating < 1 || numRating > 5 || !Number.isInteger(numRating)) {
+            return next(new AppError("Rating must be an integer between 1 and 5", 400));
+        }
+
+        if (typeof review !== "string" || review.trim().length < 3 || review.trim().length > 1000) {
+            return next(new AppError("Review must be between 3 and 1000 characters", 400));
+        }
+
         next();
     }
 
